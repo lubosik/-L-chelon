@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /intelligence/
+Disallow: /_next/
+
+Sitemap: https://lechelon.com/sitemap.xml

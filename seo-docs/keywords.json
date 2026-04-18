@@ -1,0 +1,58 @@
+[
+  {
+    "keyword": "luxury media outlet",
+    "search_volume": 0,
+    "competition": 0,
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "core"
+  },
+  {
+    "keyword": "luxury fashion editorial",
+    "search_volume": 10,
+    "competition": "LOW",
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "fashion"
+  },
+  {
+    "keyword": "F1 luxury lifestyle",
+    "search_volume": 0,
+    "competition": 0,
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "motorsport"
+  },
+  {
+    "keyword": "luxury watch news",
+    "search_volume": 720,
+    "competition": "LOW",
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "watches"
+  },
+  {
+    "keyword": "polo luxury lifestyle",
+    "search_volume": 0,
+    "competition": 0,
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "equestrian"
+  },
+  {
+    "keyword": "superyacht news",
+    "search_volume": 320,
+    "competition": "LOW",
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "lifestyle"
+  },
+  {
+    "keyword": "luxury magazine subscription online",
+    "search_volume": 0,
+    "competition": 0,
+    "competition_level": "UNKNOWN",
+    "cpc": 0,
+    "tag": "longtail"
+  }
+]
