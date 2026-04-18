@@ -1,94 +1,147 @@
-'use client'
+import Link from 'next/link'
 
-import { useEffect, useState } from 'react'
-import type { IndexDataPoint } from '@/lib/strapi'
+export const metadata = {
+  title: "L'Échelon Index",
+  description: "Live intelligence across the five pillars of luxury. Coming soon.",
+}
 
-const TABS = [
-  { key: 'fashion',    label: 'La Mode' },
-  { key: 'motorsport', label: 'La Vitesse' },
-  { key: 'watches',    label: "L'Horlogerie" },
-  { key: 'equestrian', label: "L'Équitation" },
-  { key: 'lifestyle',  label: "L'Art de Vivre" },
+const PILLARS = [
+  { french: 'LA MODE',        english: 'Fashion' },
+  { french: 'LA VITESSE',     english: 'Motorsport' },
+  { french: "L'HORLOGERIE",   english: 'Watches' },
+  { french: "L'ÉQUITATION",   english: 'Equestrian' },
+  { french: "L'ART DE VIVRE", english: 'Lifestyle' },
 ]
 
 export default function IntelligencePage() {
-  const [activeTab, setActiveTab] = useState('fashion')
-  const [data, setData] = useState<IndexDataPoint[]>([])
-
-  useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
-    fetch(`${base}/api/index-data-points?sort=id:asc&pagination[limit]=50`)
-      .then((r) => r.json())
-      .then((res) => {
-        const items = (res?.data ?? []).map((item: { id: number; attributes?: Record<string, unknown> }) =>
-          item.attributes ? { id: item.id, ...item.attributes } : item
-        )
-        setData(items as IndexDataPoint[])
-      })
-      .catch(() => {})
-  }, [])
-
-  const filtered = data.filter((d) => !d.category || d.category === activeTab)
-
   return (
-    <div style={{ background: '#ffffff', minHeight: '80vh' }}>
-      <div style={{ padding: '64px 56px 40px', borderBottom: '1px solid #E2DED8', textAlign: 'center' }} className="intel-head">
-        <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 12 }}>
-          Members Only
+    <div style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Hero */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '120px 56px 80px',
+        textAlign: 'center',
+        position: 'relative',
+      }}>
+        {/* Ambient line */}
+        <div style={{ width: 1, height: 64, background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.15))', marginBottom: 48 }} />
+
+        <p style={{
+          fontFamily: 'Lato, sans-serif',
+          fontSize: 9,
+          letterSpacing: '0.30em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.35)',
+          marginBottom: 28,
+        }}>
+          Coming Soon
         </p>
-        <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(36px, 5vw, 64px)', color: '#111', marginBottom: 12 }}>
+
+        <h1 style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontWeight: 300,
+          fontStyle: 'italic',
+          fontSize: 'clamp(48px, 7vw, 96px)',
+          color: '#ffffff',
+          lineHeight: 1,
+          letterSpacing: '0.02em',
+          marginBottom: 32,
+        }}>
           L&apos;Échelon Index
         </h1>
-        <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 12, color: '#555', letterSpacing: '0.10em' }}>
-          Live intelligence across the five pillars of luxury
+
+        <div style={{ width: 48, height: 1, background: 'rgba(255,255,255,0.18)', marginBottom: 36 }} />
+
+        <p style={{
+          fontFamily: 'Lato, sans-serif',
+          fontWeight: 300,
+          fontSize: 13,
+          color: 'rgba(255,255,255,0.50)',
+          letterSpacing: '0.12em',
+          lineHeight: 1.9,
+          maxWidth: 560,
+          marginBottom: 64,
+        }}>
+          A living archive of refinement. L&apos;Échelon Index gathers the signals that define the season across
+          fashion, horology, motorsport, equestrian, and the art of living well. Curated for those who
+          require precision where others settle for opinion.
         </p>
-      </div>
 
-      <div style={{ padding: '0 56px 80px' }} className="intel-pad">
-        <div style={{ display: 'flex', borderBottom: '1px solid #E2DED8', marginBottom: 48, gap: 0, overflowX: 'auto' }}>
-          {TABS.map((tab) => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
-              fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.20em', textTransform: 'uppercase',
-              color: activeTab === tab.key ? '#111' : '#999',
-              padding: '14px 28px',
-              borderBottom: activeTab === tab.key ? '2px solid #111' : '2px solid transparent',
-              background: 'transparent', cursor: 'pointer', whiteSpace: 'nowrap',
-              transition: 'color 0.2s', marginBottom: -1,
+        {/* Pillars */}
+        <div style={{
+          display: 'flex',
+          gap: 0,
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          borderLeft: '1px solid rgba(255,255,255,0.08)',
+          marginBottom: 72,
+          width: '100%',
+          maxWidth: 800,
+        }}
+          className="pillars-grid"
+        >
+          {PILLARS.map((p) => (
+            <div key={p.french} style={{
+              flex: 1,
+              padding: '28px 20px',
+              borderRight: '1px solid rgba(255,255,255,0.08)',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              textAlign: 'center',
             }}>
-              {tab.label}
-            </button>
+              <div style={{
+                fontFamily: 'Lato, sans-serif',
+                fontSize: 7,
+                letterSpacing: '0.24em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.25)',
+                marginBottom: 10,
+              }}>
+                {p.french}
+              </div>
+              <div style={{
+                fontFamily: 'Cormorant Garamond, serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 15,
+                color: 'rgba(255,255,255,0.45)',
+              }}>
+                {p.english}
+              </div>
+            </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', border: '1px solid #E2DED8' }}>
-          {(filtered.length ? filtered : data).map((item) => (
-            <div key={item.id} style={{ padding: '28px 24px', borderRight: '1px solid #E2DED8', borderBottom: '1px solid #E2DED8', background: '#fff' }}>
-              <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#666', marginBottom: 12 }}>
-                {item.label}
-              </div>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 36, color: '#111', lineHeight: 1, marginBottom: 8 }}>
-                {item.is_premium ? '·  ·  ·' : item.value}
-              </div>
-              {item.change && (
-                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 10, color: item.change.includes('↑') ? '#6FCF97' : '#EB5757', marginBottom: 4 }}>
-                  {item.change}
-                </div>
-              )}
-              {item.sub && <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#777' }}>{item.sub}</div>}
-            </div>
-          ))}
-          {!filtered.length && !data.length && (
-            <div style={{ gridColumn: '1/-1', padding: '60px 24px', textAlign: 'center', fontFamily: 'Lato, sans-serif', fontSize: 11, color: '#777', letterSpacing: '0.14em' }}>
-              Intelligence data will appear here once added via Strapi CMS.
-            </div>
-          )}
-        </div>
+        <Link href="/" style={{
+          fontFamily: 'Lato, sans-serif',
+          fontSize: 9,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.40)',
+          textDecoration: 'none',
+          borderBottom: '1px solid rgba(255,255,255,0.15)',
+          paddingBottom: 3,
+          transition: 'color 0.2s, border-color 0.2s',
+        }}
+          onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#fff'; el.style.borderBottomColor = 'rgba(255,255,255,0.5)' }}
+          onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = 'rgba(255,255,255,0.40)'; el.style.borderBottomColor = 'rgba(255,255,255,0.15)' }}
+        >
+          Return to L&apos;Échelon
+        </Link>
+
+        <div style={{ width: 1, height: 64, background: 'linear-gradient(to bottom, rgba(255,255,255,0.15), transparent)', marginTop: 48 }} />
       </div>
 
       <style>{`
         @media (max-width: 768px) {
-          .intel-head { padding: 40px 20px 28px !important; }
-          .intel-pad { padding: 0 20px 60px !important; }
+          .pillars-grid { flex-wrap: wrap; }
+          .pillars-grid > div { flex: 0 0 50% !important; }
+        }
+        @media (max-width: 480px) {
+          .pillars-grid > div { flex: 0 0 100% !important; }
         }
       `}</style>
     </div>

@@ -114,19 +114,8 @@ export default function HomePage() {
 
       {/* SECTION 2: TICKER BAR */}
       <div style={{ background: '#111', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 56px', height: 44 }} className="ticker-bar">
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 56px', height: 44 }} className="ticker-bar">
           <Ticker items={tickerItems} />
-          <Link href="/intelligence" style={{
-            fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.18em',
-            textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)',
-            textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
-            transition: 'color 0.2s',
-          }}
-            onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = '#fff' }}
-            onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.55)' }}
-          >
-            Unlock Intelligence
-          </Link>
         </div>
       </div>
 
@@ -293,7 +282,7 @@ export default function HomePage() {
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(255,255,255,0.40)' }}>
               Full intelligence access for members.
             </p>
-            <Link href="/subscribe" style={{
+            <Link href="/intelligence" style={{
               background: '#ffffff', color: '#111111',
               fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase',
               padding: '12px 28px', textDecoration: 'none', borderRadius: 0,

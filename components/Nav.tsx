@@ -79,6 +79,7 @@ export default function Nav() {
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
         padding: '0 32px',
+        columnGap: 40,
       }}>
 
         {/* LEFT: category links + About */}
@@ -118,7 +119,7 @@ export default function Nav() {
                 fontWeight: 300, fontSize: 26, color: '#111', lineHeight: 1,
                 letterSpacing: '-0.02em',
               }}>
-                &#x2113;
+                L
               </span>
             </span>
           </Link>

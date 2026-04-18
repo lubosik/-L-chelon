@@ -8,11 +8,11 @@ import { useHeroStore } from '@/lib/heroStore'
 const FADE_MS = 900
 const PRE_END_S = 2.2
 
-const SEQ = ['default', 'la-mode', 'la-vitesse', 'lhorlogerie', 'lequitation', 'lart-de-vivre']
+const SEQ = ['la-mode', 'la-vitesse', 'lhorlogerie', 'lequitation', 'lart-de-vivre']
 
 function nextSrc(slug: string): string {
   const i = SEQ.indexOf(slug)
-  return i <= 0 ? 'la-mode' : SEQ[i >= SEQ.length - 1 ? 1 : i + 1]
+  return SEQ[(i < 0 ? 0 : i + 1) % SEQ.length]
 }
 
 const PLACEHOLDER: Article = {
@@ -33,11 +33,12 @@ export default function Hero({ article }: { article: Article | null }) {
   // Fixed-slot: vid0/vid1 always reference the same DOM elements.
   // slots[0] is the src for element 0; slots[1] is the src for element 1.
   // Only the INACTIVE slot's src ever changes — the playing element is never touched.
-  const slotsRef = useRef<[string, string]>(['default', 'la-mode'])
-  const [slots, setSlots] = useState<[string, string]>(['default', 'la-mode'])
+  const slotsRef = useRef<[string, string]>(['la-mode', 'la-vitesse'])
+  const [slots, setSlots] = useState<[string, string]>(['la-mode', 'la-vitesse'])
   const activeSlotRef = useRef(0)
   const [activeSlot, setActiveSlot] = useState(0)
   const [fading, setFading] = useState(false)
+  const [videoStarted, setVideoStarted] = useState(false)
   const inFadeRef = useRef(false)
   const nearEndRef = useRef(false)
   const vid0 = useRef<HTMLVideoElement>(null)
@@ -85,9 +86,18 @@ export default function Hero({ article }: { article: Article | null }) {
     }, FADE_MS)
   }, []) // eslint-disable-line
 
+  // Start the first video on mount
+  useEffect(() => {
+    const v = vid0.current
+    if (!v) return
+    v.play().catch(() => {})
+    setVideoStarted(true)
+  }, []) // eslint-disable-line
+
   // Handle hover override
   useEffect(() => {
     if (!hoverSlug || inFadeRef.current) return
+    if (!videoStarted) setVideoStarted(true)
     const cur = activeSlotRef.current
     const nxt = cur === 0 ? 1 : 0
     const updated: [string, string] = [...slotsRef.current] as [string, string]
@@ -97,7 +107,7 @@ export default function Hero({ article }: { article: Article | null }) {
       const nv = vidRefs[nxt].current
       if (nv) { nv.load(); setTimeout(() => { nv.play().catch(() => {}); doFade() }, 80) }
     })
-  }, [hoverSlug, doFade]) // eslint-disable-line
+  }, [hoverSlug, doFade, videoStarted]) // eslint-disable-line
 
   // When hover clears, restore next slot to the correct sequence video
   useEffect(() => {
@@ -109,11 +119,6 @@ export default function Hero({ article }: { article: Article | null }) {
     setSlotsBoth(updated)
   }, [hoverSlug]) // eslint-disable-line
 
-  // Start element 0 playing on mount (slot 0 is the initial active slot)
-  useEffect(() => {
-    vidRefs[0].current?.play().catch(() => {})
-  }, []) // eslint-disable-line
-
   function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>, slotIdx: number) {
     if (slotIdx !== activeSlotRef.current || nearEndRef.current || inFadeRef.current || hoverSlug) return
     const v = e.currentTarget
@@ -124,8 +129,8 @@ export default function Hero({ article }: { article: Article | null }) {
   }
 
   // Opacity for each fixed element based on which is active and whether we're fading
-  const op0 = activeSlot === 0 ? (fading ? 0 : 1) : (fading ? 1 : 0)
-  const op1 = activeSlot === 1 ? (fading ? 0 : 1) : (fading ? 1 : 0)
+  const op0 = !videoStarted ? 0 : (activeSlot === 0 ? (fading ? 0 : 1) : (fading ? 1 : 0))
+  const op1 = !videoStarted ? 0 : (activeSlot === 1 ? (fading ? 0 : 1) : (fading ? 1 : 0))
 
   return (
     <section style={{ position: 'relative', height: '100vh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
@@ -136,6 +141,7 @@ export default function Hero({ article }: { article: Article | null }) {
         muted playsInline preload="auto"
         poster={`/heroes/${slots[0]}.jpg`}
         onTimeUpdate={(e) => handleTimeUpdate(e, 0)}
+        onEnded={() => { if (activeSlotRef.current === 0 && !inFadeRef.current) doFade() }}
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover', objectPosition: 'center',
@@ -150,6 +156,7 @@ export default function Hero({ article }: { article: Article | null }) {
         muted playsInline preload="auto"
         poster={`/heroes/${slots[1]}.jpg`}
         onTimeUpdate={(e) => handleTimeUpdate(e, 1)}
+        onEnded={() => { if (activeSlotRef.current === 1 && !inFadeRef.current) doFade() }}
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover', objectPosition: 'center',
