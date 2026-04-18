@@ -105,30 +105,21 @@ export default function Nav() {
           </Link>
         </div>
 
-        {/* CENTRE: logo */}
+        {/* CENTRE: emblem only */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 6 }}>
-            {/* Thin circle with cursive L inside */}
-            <span style={{ position: 'relative', width: 30, height: 30, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="30" height="30" viewBox="0 0 30 30" fill="none" style={{ position: 'absolute' }}>
-                <circle cx="15" cy="15" r="14" stroke="#111" strokeWidth="0.7"/>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <span style={{ position: 'relative', width: 38, height: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="38" height="38" viewBox="0 0 38 38" fill="none" style={{ position: 'absolute' }}>
+                <circle cx="19" cy="19" r="18" stroke="#111" strokeWidth="0.75"/>
               </svg>
               <span style={{
                 position: 'relative',
                 fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-                fontWeight: 300, fontSize: 20, color: '#111', lineHeight: 1,
+                fontWeight: 300, fontSize: 26, color: '#111', lineHeight: 1,
                 letterSpacing: '-0.02em',
               }}>
                 &#x2113;
               </span>
-            </span>
-            {/* Wordmark */}
-            <span style={{
-              fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-              fontWeight: 300, fontSize: 19, color: '#111', letterSpacing: '0.04em',
-              lineHeight: 1,
-            }}>
-              &lsquo;échelon
             </span>
           </Link>
         </div>
