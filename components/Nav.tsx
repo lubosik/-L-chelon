@@ -16,13 +16,12 @@ const RIGHT_CATS = [
 ]
 const ALL_CATS = [...LEFT_CATS, ...RIGHT_CATS]
 
-const catLinkStyle: React.CSSProperties = {
+const catLink: React.CSSProperties = {
   fontFamily: 'Lato, sans-serif',
   fontSize: 9,
   letterSpacing: '0.20em',
-  textTransform: 'uppercase' as const,
-  color: '#555',
-  cursor: 'pointer',
+  textTransform: 'uppercase',
+  color: '#666',
   textDecoration: 'none',
   paddingBottom: 2,
   borderBottom: '1px solid transparent',
@@ -30,127 +29,158 @@ const catLinkStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
-const authBtnStyle: React.CSSProperties = {
+const utilLink: React.CSSProperties = {
   fontFamily: 'Lato, sans-serif',
   fontSize: 9,
-  letterSpacing: '0.18em',
+  letterSpacing: '0.16em',
   textTransform: 'uppercase',
-  color: '#555',
-  cursor: 'pointer',
-  background: 'none',
-  border: 'none',
-  padding: 0,
+  color: '#888',
+  textDecoration: 'none',
   transition: 'color 0.2s',
   whiteSpace: 'nowrap',
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  padding: 0,
 }
 
 export default function Nav() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const setHoverSlug = useHeroStore((s) => s.setHoverSlug)
 
-  function handleCatHover(slug: string | null) {
-    if (typeof window !== 'undefined' && window.innerWidth > 768) {
-      setHoverSlug(slug)
-    }
+  function onCatEnter(e: React.MouseEvent, slug: string) {
+    if (typeof window !== 'undefined' && window.innerWidth > 768) setHoverSlug(slug)
+    const el = e.currentTarget as HTMLElement
+    el.style.color = '#111'
+    el.style.borderBottomColor = '#111'
+  }
+  function onCatLeave(e: React.MouseEvent) {
+    if (typeof window !== 'undefined' && window.innerWidth > 768) setHoverSlug(null)
+    const el = e.currentTarget as HTMLElement
+    el.style.color = '#666'
+    el.style.borderBottomColor = 'transparent'
+  }
+  function onUtilEnter(e: React.MouseEvent) {
+    (e.currentTarget as HTMLElement).style.color = '#111'
+  }
+  function onUtilLeave(e: React.MouseEvent) {
+    (e.currentTarget as HTMLElement).style.color = '#888'
   }
 
   return (
     <>
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0,
-        height: 56, background: '#FFFFFF',
-        borderBottom: '1px solid #E2DED8',
+        height: 60,
+        background: '#FFFFFF',
+        borderBottom: '1px solid #E8E4DF',
         zIndex: 1000,
         display: 'grid',
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
-        padding: '0 28px',
-        gap: 16,
+        padding: '0 32px',
       }}>
-        {/* LEFT: categories */}
-        <div className="nav-cats-left" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          {LEFT_CATS.map((cat) => (
-            <Link key={cat.slug} href={`/category/${cat.slug}`} style={catLinkStyle}
-              onMouseEnter={(e) => {
-                handleCatHover(cat.hero_video_slug)
-                const el = e.currentTarget as HTMLElement
-                el.style.color = '#111'
-                el.style.borderBottomColor = '#111'
-              }}
-              onMouseLeave={(e) => {
-                handleCatHover(null)
-                const el = e.currentTarget as HTMLElement
-                el.style.color = '#555'
-                el.style.borderBottomColor = 'transparent'
-              }}
-            >{cat.french_name}</Link>
-          ))}
-        </div>
 
-        {/* CENTRE: masthead */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>L&apos;</span>
-            <span style={{
-              width: 34, height: 34, border: '1px solid #111', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, margin: '0 2px',
-            }}>
-              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 14, color: '#111' }}>É</span>
-            </span>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>chelon</span>
+        {/* LEFT: category links + About */}
+        <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          {LEFT_CATS.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/category/${cat.slug}`}
+              style={catLink}
+              onMouseEnter={(e) => onCatEnter(e, cat.hero_video_slug)}
+              onMouseLeave={onCatLeave}
+            >
+              {cat.french_name}
+            </Link>
+          ))}
+          <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
+          <Link
+            href="/about"
+            style={catLink}
+            onMouseEnter={onUtilEnter}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#666'; (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}
+          >
+            About
           </Link>
         </div>
 
-        {/* RIGHT: categories + translate + auth + subscribe */}
-        <div className="nav-cats-right" style={{ display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'flex-end' }}>
+        {/* CENTRE: logo */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '0 24px' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>
+              L&apos;
+            </span>
+            <span style={{
+              width: 34, height: 34, border: '1px solid #111', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, margin: '0 3px',
+            }}>
+              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 14, color: '#111' }}>É</span>
+            </span>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>
+              chelon
+            </span>
+          </Link>
+        </div>
+
+        {/* RIGHT: category links + auth cluster */}
+        <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 24, justifyContent: 'flex-end' }}>
           {RIGHT_CATS.map((cat) => (
-            <Link key={cat.slug} href={`/category/${cat.slug}`} style={catLinkStyle}
-              onMouseEnter={(e) => {
-                handleCatHover(cat.hero_video_slug)
-                const el = e.currentTarget as HTMLElement
-                el.style.color = '#111'
-                el.style.borderBottomColor = '#111'
-              }}
-              onMouseLeave={(e) => {
-                handleCatHover(null)
-                const el = e.currentTarget as HTMLElement
-                el.style.color = '#555'
-                el.style.borderBottomColor = 'transparent'
-              }}
-            >{cat.french_name}</Link>
+            <Link
+              key={cat.slug}
+              href={`/category/${cat.slug}`}
+              style={catLink}
+              onMouseEnter={(e) => onCatEnter(e, cat.hero_video_slug)}
+              onMouseLeave={onCatLeave}
+            >
+              {cat.french_name}
+            </Link>
           ))}
 
-          <div className="nav-translate" style={{ display: 'flex', alignItems: 'center', marginLeft: 4 }}>
-            <div id="google_translate_element" />
-          </div>
+          {/* Divider */}
+          <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderLeft: '1px solid #E2DED8', paddingLeft: 16, flexShrink: 0 }}>
-            <SignedOut>
+          {/* Language select */}
+          <div id="google_translate_element" style={{ display: 'flex', alignItems: 'center' }} />
+
+          {/* Auth */}
+          <SignedOut>
+            <button
+              style={utilLink}
+              onMouseOver={onUtilEnter}
+              onMouseOut={onUtilLeave}
+            >
               <SignInButton mode="modal">
-                <button style={authBtnStyle}
-                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = '#111' }}
-                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = '#555' }}
-                >
-                  Sign In
-                </button>
+                <span>Sign In</span>
               </SignInButton>
-              <SignUpButton mode="modal">
-                <button style={{ ...authBtnStyle, background: '#111', color: '#fff', padding: '7px 16px' }}
-                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = '#333' }}
-                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = '#111' }}
-                >
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
+            </button>
+            <SignUpButton mode="modal">
+              <button style={{
+                fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                textTransform: 'uppercase', color: '#111', background: 'none',
+                border: '1px solid #ccc', padding: '6px 14px', cursor: 'pointer',
+                transition: 'border-color 0.2s, color 0.2s', whiteSpace: 'nowrap',
+              }}
+                onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#111' }}
+                onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#ccc' }}
+              >
+                Sign Up
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
 
-            <Link href="/subscribe" className="btn-primary" style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0 }}>
-              Subscribe
-            </Link>
-          </div>
+          {/* Subscribe CTA */}
+          <Link
+            href="/subscribe"
+            className="btn-primary"
+            style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0, letterSpacing: '0.16em' }}
+          >
+            Subscribe
+          </Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -169,33 +199,78 @@ export default function Nav() {
       {/* Mobile drawer */}
       {drawerOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.3)' }}
+          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.35)' }}
           onClick={() => setDrawerOpen(false)}
         >
           <div
             style={{
-              position: 'absolute', top: 0, right: 0, bottom: 0, width: '80vw', maxWidth: 320,
-              background: '#fff', borderLeft: '1px solid #E2DED8', padding: '60px 32px 32px',
-              display: 'flex', flexDirection: 'column', gap: 20,
+              position: 'absolute', top: 0, right: 0, bottom: 0,
+              width: '80vw', maxWidth: 320,
+              background: '#fff', borderLeft: '1px solid #E2DED8',
+              padding: '64px 32px 40px',
+              display: 'flex', flexDirection: 'column', gap: 0,
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', top: 18, right: 18, color: '#666', fontSize: 18, cursor: 'pointer' }}>✕</button>
+            <button
+              onClick={() => setDrawerOpen(false)}
+              style={{ position: 'absolute', top: 20, right: 20, color: '#888', fontSize: 18, cursor: 'pointer', background: 'none', border: 'none', lineHeight: 1 }}
+            >
+              ✕
+            </button>
+
+            {/* Categories */}
             {ALL_CATS.map((cat) => (
-              <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={() => setDrawerOpen(false)}
-                style={{ fontFamily: 'Lato, sans-serif', fontSize: 10, letterSpacing: '0.20em', textTransform: 'uppercase', color: '#333', borderBottom: '1px solid #E2DED8', paddingBottom: 16, textDecoration: 'none' }}>
+              <Link
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
+                onClick={() => setDrawerOpen(false)}
+                style={{
+                  fontFamily: 'Lato, sans-serif', fontSize: 10, letterSpacing: '0.20em',
+                  textTransform: 'uppercase', color: '#333',
+                  borderBottom: '1px solid #F0EDE8', paddingBottom: 18, marginBottom: 18,
+                  textDecoration: 'none',
+                }}
+              >
                 {cat.french_name}
               </Link>
             ))}
-            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+
+            {/* About */}
+            <Link
+              href="/about"
+              onClick={() => setDrawerOpen(false)}
+              style={{
+                fontFamily: 'Lato, sans-serif', fontSize: 10, letterSpacing: '0.20em',
+                textTransform: 'uppercase', color: '#888',
+                borderBottom: '1px solid #F0EDE8', paddingBottom: 18, marginBottom: 24,
+                textDecoration: 'none',
+              }}
+            >
+              About
+            </Link>
+
+            {/* Language */}
+            <div id="google_translate_element_mobile" style={{ marginBottom: 20 }} />
+
+            {/* Auth row */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               <SignedOut>
                 <SignInButton mode="modal">
-                  <button style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', background: 'none', border: '1px solid #ccc', padding: '10px 16px', cursor: 'pointer', flex: 1 }}>
+                  <button style={{
+                    flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                    textTransform: 'uppercase', color: '#555', background: 'none',
+                    border: '1px solid #ccc', padding: '10px 0', cursor: 'pointer',
+                  }}>
                     Sign In
                   </button>
                 </SignInButton>
                 <SignUpButton mode="modal">
-                  <button style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#fff', background: '#111', border: 'none', padding: '10px 16px', cursor: 'pointer', flex: 1 }}>
+                  <button style={{
+                    flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                    textTransform: 'uppercase', color: '#fff', background: '#111',
+                    border: 'none', padding: '10px 0', cursor: 'pointer',
+                  }}>
                     Sign Up
                   </button>
                 </SignUpButton>
@@ -204,7 +279,13 @@ export default function Nav() {
                 <UserButton />
               </SignedIn>
             </div>
-            <Link href="/subscribe" className="btn-primary" onClick={() => setDrawerOpen(false)} style={{ textAlign: 'center', marginTop: 4 }}>
+
+            <Link
+              href="/subscribe"
+              className="btn-primary"
+              onClick={() => setDrawerOpen(false)}
+              style={{ textAlign: 'center', letterSpacing: '0.16em' }}
+            >
               Subscribe
             </Link>
           </div>
@@ -212,27 +293,28 @@ export default function Nav() {
       )}
 
       <style>{`
-        @media (max-width: 1100px) {
+        @media (max-width: 1200px) {
           .hamburger { display: flex !important; }
-          .nav-cats-left, .nav-cats-right { display: none !important; }
-          nav { grid-template-columns: 1fr auto 1fr !important; }
+          .nav-left, .nav-right { display: none !important; }
         }
-        #google_translate_element {
+        #google_translate_element,
+        #google_translate_element_mobile {
           display: flex;
           align-items: center;
         }
-        #google_translate_element select {
+        #google_translate_element select,
+        #google_translate_element_mobile select {
           border: none;
           background: transparent;
           font-family: 'Lato', sans-serif;
           font-size: 9px;
-          letter-spacing: 0.14em;
-          color: #555;
+          letter-spacing: 0.12em;
+          color: #888;
           cursor: pointer;
           outline: none;
-          padding: 4px 2px;
+          padding: 2px 0;
           -webkit-appearance: none;
-          max-width: 90px;
+          max-width: 84px;
         }
         .goog-te-banner-frame { display: none !important; }
         body { top: 0 !important; }
