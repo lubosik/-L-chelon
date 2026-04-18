@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, Lato } from 'next/font/google'
+import { ClerkProvider } from '@clerk/nextjs'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import '@/styles/globals.css'
@@ -47,6 +48,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
+    <ClerkProvider>
     <html lang="en" className={`${cormorant.variable} ${lato.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -82,5 +84,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
       </body>
     </html>
+    </ClerkProvider>
   )
 }
