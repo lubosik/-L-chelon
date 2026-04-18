@@ -17,7 +17,7 @@ const MANIFESTO = [
     heading: 'Something was missing.',
     body: [
       'For decades, luxury publishing has been fragmented. Fashion titles that never glance at the paddock. Watch magazines that forget the polo field exists. Lifestyle supplements written for a reader who apparently only does one thing.',
-      'L\'Échelon was founded to close that gap — to build a publication for the reader who moves between worlds. The one who has a trackday booked the same week as couture fittings. Who follows the Patek auction results and the Grand Prix schedule with equal attention.',
+      "L'Échelon was founded to close that gap: to build a publication for the reader who moves between worlds. The one who has a trackday booked the same week as couture fittings. Who follows the Patek auction results and the Grand Prix schedule with equal attention.",
     ],
   },
   {
@@ -25,15 +25,15 @@ const MANIFESTO = [
     heading: 'Luxury is not a price point.',
     body: [
       'It is a standard of attention. Of craft. Of knowing precisely why something matters and refusing to be satisfied with anything less.',
-      'That standard governs every issue of L\'Échelon. We do not publish press releases dressed as journalism. We do not treat our readers as consumers to be sold to. We treat them as peers — people who already know the territory and want reporting that takes them deeper into it.',
+      "That standard governs every issue of L'Échelon. We do not publish press releases dressed as journalism. We do not treat our readers as consumers to be sold to. We treat them as peers: people who already know the territory and want reporting that takes them deeper into it.",
     ],
   },
   {
     label: 'The Format',
     heading: 'Twice monthly. By design.',
     body: [
-      'We publish twice a month, not twice a day. Because real intelligence requires time — time to report from the rooms where decisions are made, time to understand what something actually means before declaring it significant.',
-      'In a media landscape addicted to velocity, L\'Échelon is a deliberate choice to go slower and go deeper. Our readers are not chasing the feed. They are building their understanding.',
+      'We publish twice a month, not twice a day. Because real intelligence requires time: time to report from the rooms where decisions are made, time to understand what something actually means before declaring it significant.',
+      "In a media landscape addicted to velocity, L'Échelon is a deliberate choice to go slower and go deeper. Our readers are not chasing the feed. They are building their understanding.",
     ],
   },
 ]
@@ -115,7 +115,7 @@ export default function AboutContent() {
             In Every Issue
           </p>
           {[
-            'Reporting that goes inside — not around.',
+            'Reporting that goes inside, not around.',
             'Intelligence that belongs to our readers, not our advertisers.',
             'A standard of elegance that does not apologise for itself.',
           ].map((s) => (

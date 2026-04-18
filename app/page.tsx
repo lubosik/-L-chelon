@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Article, Category, IndexDataPoint, TickerItem } from '@/lib/strapi'
 import Ticker from '@/components/Ticker'
 import Hero from '@/components/Hero'
 
-// ── Schema markup ─────────────────────────────────────────────────────────────
 const homepageSchema = {
   '@context': 'https://schema.org',
   '@graph': [
@@ -17,7 +16,6 @@ const homepageSchema = {
       'name': "L'Échelon",
       'url': 'https://lechelon.com',
       'logo': { '@type': 'ImageObject', 'url': 'https://lechelon.com/og/logo.png', 'width': 600, 'height': 60 },
-      'founder': { '@type': 'Person', 'name': 'Nani Rosen', 'sameAs': 'https://www.instagram.com/the_nani_rosen' },
       'foundingDate': '2026',
       'description': "L'Échelon is the luxury editorial intelligence platform covering haute couture, Formula One, watches, equestrian, and superyacht lifestyle.",
       'knowsAbout': ['Luxury Fashion', 'Formula One', 'Luxury Watches', 'Polo and Equestrian Sports', 'Superyacht Lifestyle'],
@@ -39,17 +37,16 @@ const faqSchema = {
     { '@type': 'Question', 'name': "What is L'Échelon?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon is a luxury editorial intelligence platform covering five pillars: haute couture fashion, Formula One motorsport, luxury watches, equestrian sports, and ultra-luxury lifestyle. Published twice monthly." } },
     { '@type': 'Question', 'name': "What does L'Échelon cover?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon covers five luxury verticals: La Mode (fashion and couture), La Vitesse (Formula One and motorsport), L'Horlogerie (luxury watches and haute horlogerie), L'Équitation (polo and equestrian), and L'Art de Vivre (superyacht lifestyle and ultra-luxury)." } },
     { '@type': 'Question', 'name': "How do I subscribe to L'Échelon?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon offers a free tier with newsletter access and a members tier at $12/month or $99/year. Members receive full site access, the complete L'Échelon Index analytics, and all premium articles." } },
-    { '@type': 'Question', 'name': "What is the L'Échelon Index?", 'acceptedAnswer': { '@type': 'Answer', 'text': "The L'Échelon Index is a live intelligence dashboard tracking performance metrics across the five luxury pillars — including fashion social reach, watch auction results, F1 sponsor spend, and more. Full access is available to members." } },
+    { '@type': 'Question', 'name': "What is the L'Échelon Index?", 'acceptedAnswer': { '@type': 'Answer', 'text': "The L'Échelon Index is a live intelligence dashboard tracking performance metrics across the five luxury pillars. Full access is available to members." } },
   ],
 }
 
-// ── Category config ───────────────────────────────────────────────────────────
 const CATEGORY_CONFIG = [
-  { slug: 'la-mode',       french: 'LA MODE',        english: 'Fashion',    tagline: 'Where the atelier meets the algorithm.',       img: '/heroes/la-mode.jpg' },
-  { slug: 'la-vitesse',    french: 'LA VITESSE',      english: 'Motorsport', tagline: 'The pursuit of the perfect lap.',               img: '/heroes/la-vitesse.jpg' },
-  { slug: 'lhorlogerie',   french: "L'HORLOGERIE",    english: 'Watches',    tagline: 'Time, measured in masterpieces.',               img: '/heroes/lhorlogerie.jpg' },
-  { slug: 'lequitation',   french: "L'ÉQUITATION",    english: 'Equestrian', tagline: 'The oldest luxury sport, reimagined.',          img: '/heroes/lequitation.jpg' },
-  { slug: 'lart-de-vivre', french: "L'ART DE VIVRE",  english: 'Lifestyle',  tagline: 'The art of living without compromise.',         img: '/heroes/lart-de-vivre.jpg' },
+  { slug: 'la-mode',       french: 'LA MODE',        english: 'Fashion',    tagline: 'Where the atelier meets the algorithm.',       img: '/heroes/la-mode.jpg',       objPos: 'center' },
+  { slug: 'la-vitesse',    french: 'LA VITESSE',      english: 'Motorsport', tagline: 'The pursuit of the perfect lap.',               img: '/heroes/la-vitesse.jpg',    objPos: 'center' },
+  { slug: 'lhorlogerie',   french: "L'HORLOGERIE",    english: 'Watches',    tagline: 'Time, measured in masterpieces.',               img: '/heroes/lhorlogerie.jpg',   objPos: 'center' },
+  { slug: 'lequitation',   french: "L'ÉQUITATION",    english: 'Equestrian', tagline: 'The oldest luxury sport, reimagined.',          img: '/heroes/lequitation.jpg',   objPos: 'center top' },
+  { slug: 'lart-de-vivre', french: "L'ART DE VIVRE",  english: 'Lifestyle',  tagline: 'The art of living without compromise.',         img: '/heroes/lart-de-vivre.jpg', objPos: 'center' },
 ]
 
 export default function HomePage() {
@@ -60,6 +57,8 @@ export default function HomePage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [email, setEmail] = useState('')
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'done'>('idle')
+  const [indexVisible, setIndexVisible] = useState(false)
+  const indexRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
@@ -79,9 +78,20 @@ export default function HomePage() {
         const allArticles = flatList(articlesRes) as Article[]
         setArticles(allArticles)
         setFeaturedArticle(allArticles.find((a) => a.featured) ?? allArticles[0] ?? null)
-      } catch { /* Strapi offline — fallbacks active */ }
+      } catch { /* Strapi offline */ }
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    const el = indexRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setIndexVisible(true); obs.disconnect() } },
+      { threshold: 0.15 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
   }, [])
 
   async function handleNewsletter(e: React.FormEvent) {
@@ -99,10 +109,10 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-      {/* ── SECTION 1: HERO ── */}
+      {/* SECTION 1: HERO */}
       <Hero article={featuredArticle} />
 
-      {/* ── SECTION 2: TICKER BAR ── */}
+      {/* SECTION 2: TICKER BAR */}
       <div style={{ background: '#111', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 56px', height: 44 }} className="ticker-bar">
           <Ticker items={tickerItems} />
@@ -115,12 +125,12 @@ export default function HomePage() {
             onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = '#fff' }}
             onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.55)' }}
           >
-            Unlock Intelligence →
+            Unlock Intelligence
           </Link>
         </div>
       </div>
 
-      {/* ── SECTION 3: CATEGORY GRID ── */}
+      {/* SECTION 3: CATEGORY GRID */}
       <section style={{ width: '100%', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', height: 420 }} className="cat-grid-hp">
           {CATEGORY_CONFIG.map((cat, i) => (
@@ -130,7 +140,7 @@ export default function HomePage() {
                 src={cat.img}
                 alt={cat.english}
                 fill
-                style={{ objectFit: 'cover', objectPosition: 'center', transition: 'transform 0.6s ease' }}
+                style={{ objectFit: 'cover', objectPosition: cat.objPos, transition: 'transform 0.6s ease' }}
                 sizes="20vw"
                 priority={i < 3}
               />
@@ -152,7 +162,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── SECTION 4: FEATURED ARTICLE ── */}
+      {/* SECTION 4: FEATURED ARTICLE */}
       <section style={{ background: '#ffffff', padding: '80px 56px' }} className="featured-section">
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: '#aaa', marginBottom: 28 }}>
@@ -191,7 +201,7 @@ export default function HomePage() {
                   onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.letterSpacing = '0.02em' }}
                   onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.letterSpacing = '0' }}
                 >
-                  Read the cover story →
+                  Read the cover story
                 </Link>
               </div>
             </div>
@@ -203,7 +213,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── SECTION 5: LATEST ARTICLES GRID ── */}
+      {/* SECTION 5: LATEST ARTICLES GRID */}
       <section style={{ background: '#F8F7F5', padding: '64px 56px' }} className="articles-section">
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 13, color: '#aaa', letterSpacing: '0.30em', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -224,14 +234,18 @@ export default function HomePage() {
               onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#111'; el.style.borderBottomColor = '#111' }}
               onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#444'; el.style.borderBottomColor = '#ccc' }}
             >
-              View all articles →
+              View all articles
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 6: L'ÉCHELON INDEX ── */}
-      <section style={{ background: '#111111', padding: '64px 56px' }} className="index-section">
+      {/* SECTION 6: L'ÉCHELON INDEX — 3D scroll-reveal */}
+      <section
+        ref={indexRef}
+        style={{ background: '#111111', padding: '64px 56px' }}
+        className="index-section"
+      >
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 48, color: '#ffffff', letterSpacing: '0.04em', marginBottom: 8 }}>
             L&apos;Échelon Index
@@ -240,16 +254,28 @@ export default function HomePage() {
             Live intelligence across the five pillars of luxury
           </p>
           <div style={{ width: 40, height: 1, background: 'rgba(255,255,255,0.15)', marginBottom: 40 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }} className="index-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', perspective: '800px' }} className="index-grid">
             {(indexData.length > 0 ? indexData.slice(0, 5) : CATEGORY_CONFIG.map((c, i) => ({
-              id: i, label: c.french, value: '·  ·  ·', sub: c.english, change: '', is_premium: true, category: c.slug,
+              id: i, label: c.french, value: '· · ·', sub: c.english, change: '', is_premium: true, category: c.slug,
             }))).map((item, i) => (
-              <div key={item.id} style={{ padding: '0 32px', borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+              <div
+                key={item.id}
+                style={{
+                  padding: '0 32px',
+                  borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                  opacity: indexVisible ? 1 : 0,
+                  transform: indexVisible
+                    ? 'none'
+                    : `perspective(600px) rotateY(${i % 2 === 0 ? '-' : ''}18deg) translateY(32px) scale(0.93)`,
+                  transition: `opacity 0.65s ease ${i * 0.13}s, transform 0.65s ease ${i * 0.13}s`,
+                  transformOrigin: 'bottom center',
+                }}
+              >
                 <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
                   {item.label}
                 </div>
                 <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 36, color: item.is_premium ? 'rgba(255,255,255,0.20)' : '#ffffff', lineHeight: 1, marginBottom: 6 }}>
-                  {item.is_premium ? '·  ·  ·' : item.value}
+                  {item.is_premium ? '· · ·' : item.value}
                 </div>
                 <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.10em', marginBottom: 6 }}>
                   {item.sub}
@@ -282,7 +308,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── SECTION 7: ABOUT STRIP ── */}
+      {/* SECTION 7: ABOUT STRIP */}
       <section style={{ background: '#ffffff', padding: '80px 56px' }} className="about-strip">
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }} className="about-strip-grid">
           <div>
@@ -301,21 +327,21 @@ export default function HomePage() {
               onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#111'; el.style.borderBottomColor = '#333' }}
               onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#555'; el.style.borderBottomColor = '#ccc' }}
             >
-              Read our story →
+              Read our story
             </Link>
           </div>
           <div>
             <blockquote style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(22px, 2.5vw, 36px)', color: '#111', lineHeight: 1.25, maxWidth: 480, margin: 0 }}>
-              &ldquo;Nani Rosen founded L&apos;Échelon after covering five seasons across four continents and noticing that no publication spoke to the reader who moves between paddocks, polo fields, and Paris ateliers with equal fluency.&rdquo;
+              &ldquo;A publication for those who move between paddocks, polo fields, and Paris ateliers with equal fluency. Five pillars. One sensibility.&rdquo;
             </blockquote>
             <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.20em', textTransform: 'uppercase', marginTop: 20 }}>
-              — Nani Rosen, Founder
+              L&apos;Échelon · Est. 2026
             </p>
           </div>
         </div>
       </section>
 
-      {/* ── SECTION 7.5: FAQ ── */}
+      {/* SECTION 7.5: FAQ */}
       <section style={{ background: '#F8F7F5', padding: '64px 56px' }} className="faq-section">
         <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 32 }}>
@@ -325,7 +351,7 @@ export default function HomePage() {
             { q: "What is L'Échelon?", a: "L'Échelon is a luxury editorial intelligence platform covering five pillars: haute couture fashion, Formula One motorsport, luxury watches, equestrian sports, and ultra-luxury lifestyle. Published twice monthly." },
             { q: "What does L'Échelon cover?", a: "La Mode (fashion and couture), La Vitesse (Formula One and motorsport), L'Horlogerie (luxury watches), L'Équitation (polo and equestrian), and L'Art de Vivre (superyacht lifestyle and ultra-luxury)." },
             { q: "How do I subscribe?", a: "L'Échelon offers a free tier with newsletter access and a members tier at $12/month or $99/year. Members receive full site access, the complete L'Échelon Index, and all premium articles." },
-            { q: "What is the L'Échelon Index?", a: "A live intelligence dashboard tracking performance metrics across the five luxury pillars — fashion social reach, watch auction results, F1 sponsor spend, and more. Full access for members." },
+            { q: "What is the L'Échelon Index?", a: "A live intelligence dashboard tracking performance metrics across the five luxury pillars: fashion social reach, watch auction results, F1 sponsor spend, and more. Full access for members." },
           ].map((item, i) => (
             <div key={i} style={{ borderBottom: '1px solid #E2DED8', padding: '24px 0' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 20, color: '#111', marginBottom: 10 }}>{item.q}</p>
@@ -335,7 +361,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── SECTION 8: NEWSLETTER CAPTURE ── */}
+      {/* SECTION 8: NEWSLETTER CAPTURE */}
       <section style={{ background: '#0A0A0A', padding: '80px 56px', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 11, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.32em', textTransform: 'uppercase', marginBottom: 20 }}>
@@ -420,7 +446,6 @@ export default function HomePage() {
   )
 }
 
-// ── Inline article card for homepage ─────────────────────────────────────────
 function ArticleCardHP({ article }: { article: Article | null }) {
   if (!article) {
     return (

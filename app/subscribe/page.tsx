@@ -70,7 +70,7 @@ export default function SubscribePage() {
                 <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 56, color: '#111', lineHeight: 1 }}>$12</span>
                 <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 13, color: '#777', paddingBottom: 8 }}>/mo</span>
               </div>
-              <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 11, color: '#555' }}>or $99/yr — save 31%</p>
+              <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 11, color: '#555' }}>or $99/yr · save 31%</p>
             </div>
             <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 13, color: '#444', lineHeight: 1.6 }}>
               Full access to every article, the complete L&apos;Échelon Index, and all intelligence across the five pillars.
@@ -89,7 +89,7 @@ export default function SubscribePage() {
               </button>
               <button onClick={() => handleSubscribe('annual')} disabled={loading === 'annual'} className="btn-pill"
                 style={{ flex: 1, opacity: loading === 'annual' ? 0.7 : 1, fontSize: 9, padding: '13px 0', cursor: 'pointer', justifyContent: 'center' }}>
-                {loading === 'annual' ? '...' : 'Annual — Save 31%'}
+                {loading === 'annual' ? '...' : 'Annual · Save 31%'}
               </button>
             </div>
           </div>

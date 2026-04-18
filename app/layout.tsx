@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Lato } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import SubscribePopup from '@/components/SubscribePopup'
 import '@/styles/globals.css'
 
 const cormorant = Cormorant_Garamond({
@@ -23,7 +24,7 @@ const lato = Lato({
 export const metadata: Metadata = {
   metadataBase: new URL('https://lechelon.com'),
   title: {
-    default: "L'Échelon | Luxury Media Intelligence — Fashion, Watches, Motorsport & More",
+    default: "L'Échelon | Luxury Media Intelligence: Fashion, Watches, Motorsport and More",
     template: "%s | L'Échelon",
   },
   description: "L'Échelon is the luxury editorial intelligence platform covering haute couture, Formula One, watch auctions, equestrian, and superyacht lifestyle. Twice monthly. For those who move between worlds.",
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Nav />
+        <SubscribePopup />
         <main style={{ paddingTop: 56 }}>
           {children}
         </main>

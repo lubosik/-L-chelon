@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { useHeroStore } from '@/lib/heroStore'
 
 const LEFT_CATS = [
@@ -26,6 +27,21 @@ const catLinkStyle: React.CSSProperties = {
   paddingBottom: 2,
   borderBottom: '1px solid transparent',
   transition: 'color 0.2s, border-color 0.2s',
+  whiteSpace: 'nowrap',
+}
+
+const authBtnStyle: React.CSSProperties = {
+  fontFamily: 'Lato, sans-serif',
+  fontSize: 9,
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: '#555',
+  cursor: 'pointer',
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  transition: 'color 0.2s',
+  whiteSpace: 'nowrap',
 }
 
 export default function Nav() {
@@ -44,10 +60,15 @@ export default function Nav() {
         position: 'fixed', top: 0, left: 0, right: 0,
         height: 56, background: '#FFFFFF',
         borderBottom: '1px solid #E2DED8',
-        zIndex: 1000, display: 'flex', alignItems: 'center', padding: '0 28px',
+        zIndex: 1000,
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        alignItems: 'center',
+        padding: '0 28px',
+        gap: 16,
       }}>
-        {/* LEFT categories */}
-        <div className="nav-cats-left" style={{ display: 'flex', alignItems: 'center', gap: 32, flex: 1 }}>
+        {/* LEFT: categories */}
+        <div className="nav-cats-left" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
           {LEFT_CATS.map((cat) => (
             <Link key={cat.slug} href={`/category/${cat.slug}`} style={catLinkStyle}
               onMouseEnter={(e) => {
@@ -66,8 +87,8 @@ export default function Nav() {
           ))}
         </div>
 
-        {/* CENTRE masthead */}
-        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+        {/* CENTRE: masthead */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>L&apos;</span>
             <span style={{
@@ -80,8 +101,8 @@ export default function Nav() {
           </Link>
         </div>
 
-        {/* RIGHT: categories + Google Translate + subscribe */}
-        <div className="nav-cats-right" style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, justifyContent: 'flex-end' }}>
+        {/* RIGHT: categories + translate + auth + subscribe */}
+        <div className="nav-cats-right" style={{ display: 'flex', alignItems: 'center', gap: 20, justifyContent: 'flex-end' }}>
           {RIGHT_CATS.map((cat) => (
             <Link key={cat.slug} href={`/category/${cat.slug}`} style={catLinkStyle}
               onMouseEnter={(e) => {
@@ -98,10 +119,38 @@ export default function Nav() {
               }}
             >{cat.french_name}</Link>
           ))}
-          <div id="google_translate_element" />
-          <Link href="/subscribe" className="btn-primary" style={{ fontSize: 9, padding: '9px 20px', flexShrink: 0 }}>
-            Subscribe
-          </Link>
+
+          <div className="nav-translate" style={{ display: 'flex', alignItems: 'center', marginLeft: 4 }}>
+            <div id="google_translate_element" />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderLeft: '1px solid #E2DED8', paddingLeft: 16, flexShrink: 0 }}>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button style={authBtnStyle}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = '#111' }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = '#555' }}
+                >
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button style={{ ...authBtnStyle, background: '#111', color: '#fff', padding: '7px 16px' }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = '#333' }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = '#111' }}
+                >
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+
+            <Link href="/subscribe" className="btn-primary" style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0 }}>
+              Subscribe
+            </Link>
+          </div>
         </div>
 
         {/* Mobile hamburger */}
@@ -138,7 +187,24 @@ export default function Nav() {
                 {cat.french_name}
               </Link>
             ))}
-            <Link href="/subscribe" className="btn-primary" onClick={() => setDrawerOpen(false)} style={{ textAlign: 'center', marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#555', background: 'none', border: '1px solid #ccc', padding: '10px 16px', cursor: 'pointer', flex: 1 }}>
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#fff', background: '#111', border: 'none', padding: '10px 16px', cursor: 'pointer', flex: 1 }}>
+                    Sign Up
+                  </button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </div>
+            <Link href="/subscribe" className="btn-primary" onClick={() => setDrawerOpen(false)} style={{ textAlign: 'center', marginTop: 4 }}>
               Subscribe
             </Link>
           </div>
@@ -146,9 +212,14 @@ export default function Nav() {
       )}
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 1100px) {
           .hamburger { display: flex !important; }
           .nav-cats-left, .nav-cats-right { display: none !important; }
+          nav { grid-template-columns: 1fr auto 1fr !important; }
+        }
+        #google_translate_element {
+          display: flex;
+          align-items: center;
         }
         #google_translate_element select {
           border: none;
@@ -159,11 +230,15 @@ export default function Nav() {
           color: #555;
           cursor: pointer;
           outline: none;
-          padding: 0;
+          padding: 4px 2px;
           -webkit-appearance: none;
+          max-width: 90px;
         }
         .goog-te-banner-frame { display: none !important; }
         body { top: 0 !important; }
+        .goog-te-gadget-icon { display: none !important; }
+        .goog-te-gadget-simple { border: none !important; background: transparent !important; padding: 0 !important; }
+        .goog-logo-link { display: none !important; }
       `}</style>
     </>
   )
