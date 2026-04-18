@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { fetchCategoryBySlug, fetchArticles } from '@/lib/strapi'
 import type { Category, Article } from '@/lib/strapi'
+import CategoryVideoLoop from '@/components/CategoryVideoLoop'
 
 const FALLBACK_CATEGORIES: Record<string, Category & { tagline: string; intro: string }> = {
   'la-mode': {
@@ -92,15 +93,9 @@ export default async function CategoryPage({ params }: Props) {
 
       {/* CATEGORY HERO */}
       <section style={{ position: 'relative', height: '100vh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
-        <video
-          autoPlay muted loop playsInline preload="none"
-          poster={`/heroes/${category.hero_video_slug}.jpg`}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
-        >
-          <source src={`/heroes/${category.hero_video_slug}.mp4`} type="video/mp4" />
-        </video>
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 2 }} />
-        <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 40px' }}>
+        <CategoryVideoLoop slug={category.hero_video_slug ?? slug} />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 3 }} />
+        <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 40px', pointerEvents: 'none' }}>
           <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 12 }}>
             {category.french_name}
           </p>

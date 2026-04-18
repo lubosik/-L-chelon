@@ -105,20 +105,33 @@ export default function Nav() {
           </Link>
         </div>
 
-        {/* CENTRE: logo */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '0 24px' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>
+        {/* CENTRE: logo wordmark */}
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 0 }}>
+            <span style={{
+              fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
+              fontWeight: 300, fontSize: 20, color: '#111', letterSpacing: '0.03em',
+              lineHeight: 1,
+            }}>
               L&apos;
             </span>
-            <span style={{
-              width: 34, height: 34, border: '1px solid #111', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, margin: '0 3px',
-            }}>
-              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 14, color: '#111' }}>É</span>
+            {/* Double-ring monogram seal */}
+            <span style={{ position: 'relative', width: 40, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, margin: '0 1px' }}>
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ position: 'absolute' }}>
+                <circle cx="20" cy="20" r="19" stroke="#111" strokeWidth="0.8"/>
+                <circle cx="20" cy="20" r="14.5" stroke="#111" strokeWidth="0.35"/>
+              </svg>
+              <span style={{
+                position: 'absolute',
+                fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
+                fontWeight: 600, fontSize: 18, color: '#111', lineHeight: 1,
+              }}>É</span>
             </span>
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, letterSpacing: '0.24em', color: '#111' }}>
+            <span style={{
+              fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
+              fontWeight: 300, fontSize: 20, color: '#111', letterSpacing: '0.03em',
+              lineHeight: 1,
+            }}>
               chelon
             </span>
           </Link>

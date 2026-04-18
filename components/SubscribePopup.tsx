@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { SignUpButton } from '@clerk/nextjs'
+import { SignUpButton, useClerk } from '@clerk/nextjs'
 
 const STORAGE_KEY = 'lechelon_popup_dismissed'
 const DISMISS_DAYS = 7
@@ -9,7 +9,8 @@ const DISMISS_DAYS = 7
 export default function SubscribePopup() {
   const [visible, setVisible] = useState(false)
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'creating'>('idle')
+  const { openSignUp } = useClerk()
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY)
@@ -38,10 +39,6 @@ export default function SubscribePopup() {
       })
     } catch { /* ignore */ }
     setStatus('done')
-    setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, String(Date.now()))
-      setVisible(false)
-    }, 2800)
   }
 
   if (!visible) return null
@@ -113,13 +110,50 @@ export default function SubscribePopup() {
           </p>
 
           {status === 'done' ? (
-            <p style={{
-              fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-              fontSize: 20, color: 'rgba(255,255,255,0.75)', textAlign: 'center',
-              padding: '20px 0',
-            }}>
-              You&apos;ll hear from us soon.
-            </p>
+            <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+              <p style={{
+                fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
+                fontSize: 22, color: '#fff', marginBottom: 8,
+              }}>
+                You&apos;re subscribed.
+              </p>
+              <p style={{
+                fontFamily: 'Lato, sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.50)',
+                letterSpacing: '0.08em', lineHeight: 1.6, marginBottom: 28,
+              }}>
+                Complete your profile to access member content and the L&apos;Échelon Index.
+              </p>
+              <button
+                onClick={() => {
+                  openSignUp({ initialValues: { emailAddress: email } })
+                  localStorage.setItem(STORAGE_KEY, String(Date.now()))
+                  setVisible(false)
+                }}
+                style={{
+                  width: '100%', background: '#ffffff', color: '#111',
+                  fontFamily: 'Lato, sans-serif', fontSize: 9,
+                  letterSpacing: '0.24em', textTransform: 'uppercase',
+                  padding: '14px', border: 'none', cursor: 'pointer',
+                  transition: 'background 0.2s', marginBottom: 12,
+                }}
+                onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = '#E8E5E0' }}
+                onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = '#ffffff' }}
+              >
+                Create Your Account
+              </button>
+              <button
+                onClick={() => { localStorage.setItem(STORAGE_KEY, String(Date.now())); setVisible(false) }}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.12em',
+                  color: 'rgba(255,255,255,0.30)', textTransform: 'uppercase', transition: 'color 0.2s',
+                }}
+                onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.60)' }}
+                onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.30)' }}
+              >
+                Maybe later
+              </button>
+            </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
               <input

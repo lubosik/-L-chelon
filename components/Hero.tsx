@@ -5,85 +5,166 @@ import Link from 'next/link'
 import type { Article } from '@/lib/strapi'
 import { useHeroStore } from '@/lib/heroStore'
 
-interface HeroProps {
-  article: Article | null
-  activeCategorySlug?: string
+const FADE_MS = 900
+const PRE_END_S = 2.2
+
+const SEQ = ['default', 'la-mode', 'la-vitesse', 'lhorlogerie', 'lequitation', 'lart-de-vivre']
+
+function nextSrc(slug: string): string {
+  const i = SEQ.indexOf(slug)
+  return i <= 0 ? 'la-mode' : SEQ[i >= SEQ.length - 1 ? 1 : i + 1]
 }
 
-const FADE_DURATION = 600
-
-const AUTO_SEQUENCE = ['default', 'la-mode', 'la-vitesse', 'lhorlogerie', 'lequitation', 'lart-de-vivre']
-
-const PLACEHOLDER_ARTICLE: Article = {
+const PLACEHOLDER: Article = {
   id: 0,
   title: 'The New Standard in <em>Luxury</em> Editorial',
   slug: '#',
   excerpt: "Fashion, motorsport, haute horlogerie, equestrian, and the art of living well. L'Échelon covers the five pillars of the luxury world.",
-  is_premium: false,
-  featured: true,
-  read_time: 0,
+  is_premium: false, featured: true, read_time: 0,
   author: { id: 0, name: "L'Échelon" },
   category: undefined,
 }
 
-export default function Hero({ article, activeCategorySlug }: HeroProps) {
-  const displayArticle = article ?? PLACEHOLDER_ARTICLE
+export default function Hero({ article }: { article: Article | null }) {
+  const displayArticle = article ?? PLACEHOLDER
   const isMobile = useRef(false)
-  const defaultSlug = activeCategorySlug ?? displayArticle.category?.hero_video_slug ?? 'default'
+  const hoverSlug = useHeroStore(s => s.hoverSlug)
 
-  const [currentSlug, setCurrentSlug] = useState<string>(defaultSlug)
-  const [pendingSlug, setPendingSlug] = useState<string | null>(null)
-  const [isFading, setIsFading] = useState(false)
-  const fadeRef = useRef(false)
-  const rotationIndexRef = useRef(0)
-
-  const hoverSlug = useHeroStore((s) => s.hoverSlug)
+  // Dual-buffer: slots[0] and slots[1] are always in DOM
+  // activeSlot is the one currently visible; the other preloads the next video
+  const slotsRef = useRef<[string, string]>(['default', 'la-mode'])
+  const [slots, setSlots] = useState<[string, string]>(['default', 'la-mode'])
+  const activeSlotRef = useRef(0)
+  const [activeSlot, setActiveSlot] = useState(0)
+  const [fading, setFading] = useState(false)
+  const inFadeRef = useRef(false)
+  const nearEndRef = useRef(false)
+  const vidRefs = [useRef<HTMLVideoElement>(null), useRef<HTMLVideoElement>(null)]
 
   useEffect(() => { isMobile.current = window.innerWidth <= 768 }, [])
 
-  const getVideoSrc = useCallback((slug: string) => {
-    const suffix = isMobile.current ? '-mob' : ''
-    return `/heroes/${slug}${suffix}.mp4`
-  }, [])
+  const getSrc = useCallback((slug: string) =>
+    `/heroes/${slug}${isMobile.current ? '-mob' : ''}.mp4`
+  , [])
 
-  const transitionTo = useCallback((newSlug: string) => {
-    if (newSlug === currentSlug || fadeRef.current) return
-    const idx = AUTO_SEQUENCE.indexOf(newSlug)
-    if (idx !== -1) rotationIndexRef.current = idx
-    fadeRef.current = true
-    setIsFading(true)
-    setPendingSlug(newSlug)
+  function setSlotsBoth(next: [string, string]) {
+    slotsRef.current = next
+    setSlots(next)
+  }
+
+  function setActiveBoth(next: number) {
+    activeSlotRef.current = next
+    setActiveSlot(next)
+  }
+
+  // Core crossfade: start playing the inactive slot, then swap opacities
+  const doFade = useCallback(() => {
+    if (inFadeRef.current) return
+    inFadeRef.current = true
+    nearEndRef.current = false
+
+    const cur = activeSlotRef.current
+    const nxt = cur === 0 ? 1 : 0
+
+    // Start the preloaded next video from the beginning
+    const nv = vidRefs[nxt].current
+    if (nv) { nv.currentTime = 0; nv.play().catch(() => {}) }
+
+    setFading(true)
     setTimeout(() => {
-      setCurrentSlug(newSlug)
-      setPendingSlug(null)
-      setIsFading(false)
-      fadeRef.current = false
-    }, FADE_DURATION)
-  }, [currentSlug])
+      // Swap active
+      setActiveBoth(nxt)
+      // Prepare new next: put the following video into the old active slot
+      const updated: [string, string] = [...slotsRef.current] as [string, string]
+      updated[cur] = nextSrc(slotsRef.current[nxt])
+      setSlotsBoth(updated)
+      setFading(false)
+      inFadeRef.current = false
+    }, FADE_MS)
+  }, []) // eslint-disable-line
 
-  const handleVideoEnded = useCallback(() => {
-    if (activeCategorySlug || hoverSlug || fadeRef.current) return
-    const cur = rotationIndexRef.current
-    const nextIdx = cur === 0 ? 1 : cur >= AUTO_SEQUENCE.length - 1 ? 1 : cur + 1
-    transitionTo(AUTO_SEQUENCE[nextIdx])
-  }, [activeCategorySlug, hoverSlug, transitionTo])
-
+  // Handle hover override
   useEffect(() => {
-    if (activeCategorySlug && activeCategorySlug !== currentSlug) transitionTo(activeCategorySlug)
-  }, [activeCategorySlug]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!hoverSlug || inFadeRef.current) return
+    const cur = activeSlotRef.current
+    const nxt = cur === 0 ? 1 : 0
+    // Load hover slug into inactive slot
+    const updated: [string, string] = [...slotsRef.current] as [string, string]
+    updated[nxt] = hoverSlug
+    setSlotsBoth(updated)
+    // Give React one frame to update src, then fade
+    requestAnimationFrame(() => {
+      const nv = vidRefs[nxt].current
+      if (nv) { nv.load(); setTimeout(() => { nv.play().catch(() => {}); doFade() }, 80) }
+    })
+  }, [hoverSlug, doFade]) // eslint-disable-line
 
+  // When hover clears, fix next-slot to correct sequence position
   useEffect(() => {
-    if (hoverSlug) {
-      transitionTo(hoverSlug)
-    } else {
-      transitionTo(activeCategorySlug ?? displayArticle.category?.hero_video_slug ?? 'default')
+    if (hoverSlug !== null) return
+    const cur = activeSlotRef.current
+    const nxt = cur === 0 ? 1 : 0
+    const updated: [string, string] = [...slotsRef.current] as [string, string]
+    updated[nxt] = nextSrc(slotsRef.current[cur])
+    setSlotsBoth(updated)
+  }, [hoverSlug]) // eslint-disable-line
+
+  // Start active video on mount and on slot swap
+  useEffect(() => {
+    vidRefs[activeSlot].current?.play().catch(() => {})
+  }, [activeSlot]) // eslint-disable-line
+
+  // Preload inactive slot (don't autoplay, just buffer)
+  useEffect(() => {
+    const nxt = activeSlot === 0 ? 1 : 0
+    vidRefs[nxt].current?.load()
+  }, [activeSlot, slots]) // eslint-disable-line
+
+  function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>, slotIdx: number) {
+    if (slotIdx !== activeSlotRef.current || nearEndRef.current || inFadeRef.current || hoverSlug) return
+    const v = e.currentTarget
+    if (v.duration > 0 && v.currentTime >= v.duration - PRE_END_S) {
+      nearEndRef.current = true
+      doFade()
     }
-  }, [hoverSlug]) // eslint-disable-line react-hooks/exhaustive-deps
+  }
+
+  const inactiveSlot = activeSlot === 0 ? 1 : 0
+  // Opacity: active fades to 0, inactive fades to 1 when fading
+  const opA = activeSlot === 0 ? (fading ? 0 : 1) : (fading ? 1 : 0)
+  const opB = activeSlot === 1 ? (fading ? 0 : 1) : (fading ? 1 : 0)
+  const ops = [opA, opB]
 
   return (
     <section style={{ position: 'relative', height: '100vh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
-      <VideoBackground src={getVideoSrc(currentSlug)} fallbackSrc="/heroes/default.mp4" opacity={isFading ? 0 : 1} zIndex={1} onEnded={handleVideoEnded} />
-      {pendingSlug && <VideoBackground src={getVideoSrc(pendingSlug)} fallbackSrc="/heroes/default.mp4" opacity={isFading ? 1 : 0} zIndex={2} onEnded={handleVideoEnded} />}
+      {/* Inactive video (below, preloading) */}
+      <video
+        ref={vidRefs[inactiveSlot]}
+        src={getSrc(slots[inactiveSlot])}
+        muted playsInline preload="auto"
+        poster={`/heroes/${slots[inactiveSlot]}.jpg`}
+        onTimeUpdate={(e) => handleTimeUpdate(e, inactiveSlot)}
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center',
+          zIndex: 1, opacity: ops[inactiveSlot],
+          transition: `opacity ${FADE_MS}ms ease`, pointerEvents: 'none',
+        }}
+      />
+      {/* Active video (above, playing) */}
+      <video
+        ref={vidRefs[activeSlot]}
+        src={getSrc(slots[activeSlot])}
+        autoPlay muted playsInline preload="auto"
+        poster={`/heroes/${slots[activeSlot]}.jpg`}
+        onTimeUpdate={(e) => handleTimeUpdate(e, activeSlot)}
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center',
+          zIndex: 2, opacity: ops[activeSlot],
+          transition: `opacity ${FADE_MS}ms ease`, pointerEvents: 'none',
+        }}
+      />
 
       {/* Gradient overlays */}
       <div style={{
@@ -145,47 +226,5 @@ export default function Hero({ article, activeCategorySlug }: HeroProps) {
         }
       `}</style>
     </section>
-  )
-}
-
-function VideoBackground({ src, fallbackSrc, opacity, zIndex, onEnded }: {
-  src: string
-  fallbackSrc: string
-  opacity: number
-  zIndex: number
-  onEnded?: () => void
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  const handleError = useCallback(() => {
-    const video = videoRef.current
-    if (video && !video.src.endsWith(fallbackSrc)) {
-      video.src = fallbackSrc
-      video.load()
-      video.play().catch(() => {})
-    }
-  }, [fallbackSrc])
-
-  useEffect(() => {
-    videoRef.current?.play().catch(() => {})
-  }, [src])
-
-  return (
-    <video
-      ref={videoRef}
-      src={src}
-      autoPlay
-      muted
-      playsInline
-      preload="none"
-      poster={src.replace('.mp4', '.jpg').replace('-mob', '')}
-      onError={handleError}
-      onEnded={onEnded}
-      style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        objectFit: 'cover', objectPosition: 'center',
-        zIndex, opacity, transition: `opacity ${FADE_DURATION}ms ease`, pointerEvents: 'none',
-      }}
-    />
   )
 }
