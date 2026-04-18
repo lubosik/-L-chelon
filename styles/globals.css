@@ -120,24 +120,6 @@ video { pointer-events: none; }
 .ticker-inner { animation: ticker-scroll 35s linear infinite; }
 .ticker-inner:hover { animation-play-state: paused; }
 
-/* ── GOOGLE TRANSLATE ── */
-#google_translate_element select {
-  border: none;
-  background: transparent;
-  font-family: 'Lato', sans-serif;
-  font-size: 9px;
-  letter-spacing: 0.14em;
-  color: #555;
-  cursor: pointer;
-  outline: none;
-  padding: 0;
-  -webkit-appearance: none;
-}
-.goog-te-banner-frame { display: none !important; }
-.goog-te-banner-frame.skiptranslate { display: none !important; }
-body { top: 0 !important; }
-.goog-te-gadget-icon { display: none !important; }
-.goog-te-gadget-simple { border: none !important; background: transparent !important; padding: 0 !important; }
 
 /* ── MOBILE ── */
 @media (max-width: 768px) {

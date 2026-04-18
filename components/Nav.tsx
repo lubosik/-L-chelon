@@ -105,34 +105,30 @@ export default function Nav() {
           </Link>
         </div>
 
-        {/* CENTRE: logo wordmark */}
+        {/* CENTRE: logo */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 0 }}>
-            <span style={{
-              fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-              fontWeight: 300, fontSize: 20, color: '#111', letterSpacing: '0.03em',
-              lineHeight: 1,
-            }}>
-              L&apos;
-            </span>
-            {/* Double-ring monogram seal */}
-            <span style={{ position: 'relative', width: 40, height: 40, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, margin: '0 1px' }}>
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ position: 'absolute' }}>
-                <circle cx="20" cy="20" r="19" stroke="#111" strokeWidth="0.8"/>
-                <circle cx="20" cy="20" r="14.5" stroke="#111" strokeWidth="0.35"/>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', gap: 6 }}>
+            {/* Thin circle with cursive L inside */}
+            <span style={{ position: 'relative', width: 30, height: 30, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="30" height="30" viewBox="0 0 30 30" fill="none" style={{ position: 'absolute' }}>
+                <circle cx="15" cy="15" r="14" stroke="#111" strokeWidth="0.7"/>
               </svg>
               <span style={{
-                position: 'absolute',
+                position: 'relative',
                 fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-                fontWeight: 600, fontSize: 18, color: '#111', lineHeight: 1,
-              }}>É</span>
+                fontWeight: 300, fontSize: 20, color: '#111', lineHeight: 1,
+                letterSpacing: '-0.02em',
+              }}>
+                &#x2113;
+              </span>
             </span>
+            {/* Wordmark */}
             <span style={{
               fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-              fontWeight: 300, fontSize: 20, color: '#111', letterSpacing: '0.03em',
+              fontWeight: 300, fontSize: 19, color: '#111', letterSpacing: '0.04em',
               lineHeight: 1,
             }}>
-              chelon
+              &lsquo;échelon
             </span>
           </Link>
         </div>
@@ -153,9 +149,6 @@ export default function Nav() {
 
           {/* Divider */}
           <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
-
-          {/* Language select */}
-          <div id="google_translate_element" style={{ display: 'flex', alignItems: 'center' }} />
 
           {/* Auth */}
           <SignedOut>
@@ -263,9 +256,6 @@ export default function Nav() {
               About
             </Link>
 
-            {/* Language */}
-            <div id="google_translate_element_mobile" style={{ marginBottom: 20 }} />
-
             {/* Auth row */}
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               <SignedOut>
@@ -310,30 +300,6 @@ export default function Nav() {
           .hamburger { display: flex !important; }
           .nav-left, .nav-right { display: none !important; }
         }
-        #google_translate_element,
-        #google_translate_element_mobile {
-          display: flex;
-          align-items: center;
-        }
-        #google_translate_element select,
-        #google_translate_element_mobile select {
-          border: none;
-          background: transparent;
-          font-family: 'Lato', sans-serif;
-          font-size: 9px;
-          letter-spacing: 0.12em;
-          color: #888;
-          cursor: pointer;
-          outline: none;
-          padding: 2px 0;
-          -webkit-appearance: none;
-          max-width: 84px;
-        }
-        .goog-te-banner-frame { display: none !important; }
-        body { top: 0 !important; }
-        .goog-te-gadget-icon { display: none !important; }
-        .goog-te-gadget-simple { border: none !important; background: transparent !important; padding: 0 !important; }
-        .goog-logo-link { display: none !important; }
       `}</style>
     </>
   )

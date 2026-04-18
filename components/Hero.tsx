@@ -30,8 +30,9 @@ export default function Hero({ article }: { article: Article | null }) {
   const isMobile = useRef(false)
   const hoverSlug = useHeroStore(s => s.hoverSlug)
 
-  // Dual-buffer: slots[0] and slots[1] are always in DOM
-  // activeSlot is the one currently visible; the other preloads the next video
+  // Fixed-slot: vid0/vid1 always reference the same DOM elements.
+  // slots[0] is the src for element 0; slots[1] is the src for element 1.
+  // Only the INACTIVE slot's src ever changes — the playing element is never touched.
   const slotsRef = useRef<[string, string]>(['default', 'la-mode'])
   const [slots, setSlots] = useState<[string, string]>(['default', 'la-mode'])
   const activeSlotRef = useRef(0)
@@ -39,7 +40,9 @@ export default function Hero({ article }: { article: Article | null }) {
   const [fading, setFading] = useState(false)
   const inFadeRef = useRef(false)
   const nearEndRef = useRef(false)
-  const vidRefs = [useRef<HTMLVideoElement>(null), useRef<HTMLVideoElement>(null)]
+  const vid0 = useRef<HTMLVideoElement>(null)
+  const vid1 = useRef<HTMLVideoElement>(null)
+  const vidRefs = [vid0, vid1]
 
   useEffect(() => { isMobile.current = window.innerWidth <= 768 }, [])
 
@@ -57,7 +60,6 @@ export default function Hero({ article }: { article: Article | null }) {
     setActiveSlot(next)
   }
 
-  // Core crossfade: start playing the inactive slot, then swap opacities
   const doFade = useCallback(() => {
     if (inFadeRef.current) return
     inFadeRef.current = true
@@ -66,15 +68,15 @@ export default function Hero({ article }: { article: Article | null }) {
     const cur = activeSlotRef.current
     const nxt = cur === 0 ? 1 : 0
 
-    // Start the preloaded next video from the beginning
+    // The inactive slot has been preloading — just play it, no seek needed
     const nv = vidRefs[nxt].current
-    if (nv) { nv.currentTime = 0; nv.play().catch(() => {}) }
+    if (nv) nv.play().catch(() => {})
 
     setFading(true)
     setTimeout(() => {
-      // Swap active
       setActiveBoth(nxt)
-      // Prepare new next: put the following video into the old active slot
+      // Now update the old active slot's src to the next video in sequence.
+      // It's invisible at opacity 0, so the src change causes no visual flash.
       const updated: [string, string] = [...slotsRef.current] as [string, string]
       updated[cur] = nextSrc(slotsRef.current[nxt])
       setSlotsBoth(updated)
@@ -88,18 +90,16 @@ export default function Hero({ article }: { article: Article | null }) {
     if (!hoverSlug || inFadeRef.current) return
     const cur = activeSlotRef.current
     const nxt = cur === 0 ? 1 : 0
-    // Load hover slug into inactive slot
     const updated: [string, string] = [...slotsRef.current] as [string, string]
     updated[nxt] = hoverSlug
     setSlotsBoth(updated)
-    // Give React one frame to update src, then fade
     requestAnimationFrame(() => {
       const nv = vidRefs[nxt].current
       if (nv) { nv.load(); setTimeout(() => { nv.play().catch(() => {}); doFade() }, 80) }
     })
   }, [hoverSlug, doFade]) // eslint-disable-line
 
-  // When hover clears, fix next-slot to correct sequence position
+  // When hover clears, restore next slot to the correct sequence video
   useEffect(() => {
     if (hoverSlug !== null) return
     const cur = activeSlotRef.current
@@ -109,16 +109,10 @@ export default function Hero({ article }: { article: Article | null }) {
     setSlotsBoth(updated)
   }, [hoverSlug]) // eslint-disable-line
 
-  // Start active video on mount and on slot swap
+  // Start element 0 playing on mount (slot 0 is the initial active slot)
   useEffect(() => {
-    vidRefs[activeSlot].current?.play().catch(() => {})
-  }, [activeSlot]) // eslint-disable-line
-
-  // Preload inactive slot (don't autoplay, just buffer)
-  useEffect(() => {
-    const nxt = activeSlot === 0 ? 1 : 0
-    vidRefs[nxt].current?.load()
-  }, [activeSlot, slots]) // eslint-disable-line
+    vidRefs[0].current?.play().catch(() => {})
+  }, []) // eslint-disable-line
 
   function handleTimeUpdate(e: React.SyntheticEvent<HTMLVideoElement>, slotIdx: number) {
     if (slotIdx !== activeSlotRef.current || nearEndRef.current || inFadeRef.current || hoverSlug) return
@@ -129,39 +123,37 @@ export default function Hero({ article }: { article: Article | null }) {
     }
   }
 
-  const inactiveSlot = activeSlot === 0 ? 1 : 0
-  // Opacity: active fades to 0, inactive fades to 1 when fading
-  const opA = activeSlot === 0 ? (fading ? 0 : 1) : (fading ? 1 : 0)
-  const opB = activeSlot === 1 ? (fading ? 0 : 1) : (fading ? 1 : 0)
-  const ops = [opA, opB]
+  // Opacity for each fixed element based on which is active and whether we're fading
+  const op0 = activeSlot === 0 ? (fading ? 0 : 1) : (fading ? 1 : 0)
+  const op1 = activeSlot === 1 ? (fading ? 0 : 1) : (fading ? 1 : 0)
 
   return (
     <section style={{ position: 'relative', height: '100vh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
-      {/* Inactive video (below, preloading) */}
+      {/* Element 0 — always ref=vid0, always src=slots[0] */}
       <video
-        ref={vidRefs[inactiveSlot]}
-        src={getSrc(slots[inactiveSlot])}
+        ref={vid0}
+        src={getSrc(slots[0])}
         muted playsInline preload="auto"
-        poster={`/heroes/${slots[inactiveSlot]}.jpg`}
-        onTimeUpdate={(e) => handleTimeUpdate(e, inactiveSlot)}
+        poster={`/heroes/${slots[0]}.jpg`}
+        onTimeUpdate={(e) => handleTimeUpdate(e, 0)}
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover', objectPosition: 'center',
-          zIndex: 1, opacity: ops[inactiveSlot],
+          zIndex: 1, opacity: op0,
           transition: `opacity ${FADE_MS}ms ease`, pointerEvents: 'none',
         }}
       />
-      {/* Active video (above, playing) */}
+      {/* Element 1 — always ref=vid1, always src=slots[1] */}
       <video
-        ref={vidRefs[activeSlot]}
-        src={getSrc(slots[activeSlot])}
-        autoPlay muted playsInline preload="auto"
-        poster={`/heroes/${slots[activeSlot]}.jpg`}
-        onTimeUpdate={(e) => handleTimeUpdate(e, activeSlot)}
+        ref={vid1}
+        src={getSrc(slots[1])}
+        muted playsInline preload="auto"
+        poster={`/heroes/${slots[1]}.jpg`}
+        onTimeUpdate={(e) => handleTimeUpdate(e, 1)}
         style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
           objectFit: 'cover', objectPosition: 'center',
-          zIndex: 2, opacity: ops[activeSlot],
+          zIndex: 2, opacity: op1,
           transition: `opacity ${FADE_MS}ms ease`, pointerEvents: 'none',
         }}
       />
