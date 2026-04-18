@@ -115,20 +115,7 @@ export default function IntelligencePage() {
           ))}
         </div>
 
-        <Link href="/" style={{
-          fontFamily: 'Lato, sans-serif',
-          fontSize: 9,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          color: 'rgba(255,255,255,0.40)',
-          textDecoration: 'none',
-          borderBottom: '1px solid rgba(255,255,255,0.15)',
-          paddingBottom: 3,
-          transition: 'color 0.2s, border-color 0.2s',
-        }}
-          onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#fff'; el.style.borderBottomColor = 'rgba(255,255,255,0.5)' }}
-          onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = 'rgba(255,255,255,0.40)'; el.style.borderBottomColor = 'rgba(255,255,255,0.15)' }}
-        >
+        <Link href="/" className="intel-back">
           Return to L&apos;Échelon
         </Link>
 
@@ -136,6 +123,21 @@ export default function IntelligencePage() {
       </div>
 
       <style>{`
+        .intel-back {
+          font-family: Lato, sans-serif;
+          font-size: 9px;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.40);
+          text-decoration: none;
+          border-bottom: 1px solid rgba(255,255,255,0.15);
+          padding-bottom: 3px;
+          transition: color 0.2s, border-color 0.2s;
+        }
+        .intel-back:hover {
+          color: #fff;
+          border-bottom-color: rgba(255,255,255,0.5);
+        }
         @media (max-width: 768px) {
           .pillars-grid { flex-wrap: wrap; }
           .pillars-grid > div { flex: 0 0 50% !important; }
