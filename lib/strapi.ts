@@ -43,6 +43,14 @@ export interface Category {
   color?: string
   hero_video_slug?: string
   hero_label?: string
+  grid_image?: StrapiImage
+  grid_image_alt?: string
+}
+
+export function getStrapiImageUrl(url: string): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${STRAPI_URL}${url}`
 }
 
 export interface Issue {

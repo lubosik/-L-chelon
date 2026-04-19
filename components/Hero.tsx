@@ -30,9 +30,6 @@ export default function Hero({ article }: { article: Article | null }) {
   const isMobile = useRef(false)
   const hoverSlug = useHeroStore(s => s.hoverSlug)
 
-  // Fixed-slot: vid0/vid1 always reference the same DOM elements.
-  // slots[0] is the src for element 0; slots[1] is the src for element 1.
-  // Only the INACTIVE slot's src ever changes — the playing element is never touched.
   const slotsRef = useRef<[string, string]>(['la-mode', 'la-vitesse'])
   const [slots, setSlots] = useState<[string, string]>(['la-mode', 'la-vitesse'])
   const activeSlotRef = useRef(0)
@@ -69,15 +66,12 @@ export default function Hero({ article }: { article: Article | null }) {
     const cur = activeSlotRef.current
     const nxt = cur === 0 ? 1 : 0
 
-    // The inactive slot has been preloading — just play it, no seek needed
     const nv = vidRefs[nxt].current
     if (nv) nv.play().catch(() => {})
 
     setFading(true)
     setTimeout(() => {
       setActiveBoth(nxt)
-      // Now update the old active slot's src to the next video in sequence.
-      // It's invisible at opacity 0, so the src change causes no visual flash.
       const updated: [string, string] = [...slotsRef.current] as [string, string]
       updated[cur] = nextSrc(slotsRef.current[nxt])
       setSlotsBoth(updated)
@@ -86,7 +80,6 @@ export default function Hero({ article }: { article: Article | null }) {
     }, FADE_MS)
   }, []) // eslint-disable-line
 
-  // Start the first video on mount
   useEffect(() => {
     const v = vid0.current
     if (!v) return
@@ -94,7 +87,6 @@ export default function Hero({ article }: { article: Article | null }) {
     setVideoStarted(true)
   }, []) // eslint-disable-line
 
-  // Handle hover override
   useEffect(() => {
     if (!hoverSlug || inFadeRef.current) return
     if (!videoStarted) setVideoStarted(true)
@@ -109,7 +101,6 @@ export default function Hero({ article }: { article: Article | null }) {
     })
   }, [hoverSlug, doFade, videoStarted]) // eslint-disable-line
 
-  // When hover clears, restore next slot to the correct sequence video
   useEffect(() => {
     if (hoverSlug !== null) return
     const cur = activeSlotRef.current
@@ -128,13 +119,12 @@ export default function Hero({ article }: { article: Article | null }) {
     }
   }
 
-  // Opacity for each fixed element based on which is active and whether we're fading
   const op0 = !videoStarted ? 0 : (activeSlot === 0 ? (fading ? 0 : 1) : (fading ? 1 : 0))
   const op1 = !videoStarted ? 0 : (activeSlot === 1 ? (fading ? 0 : 1) : (fading ? 1 : 0))
 
   return (
-    <section style={{ position: 'relative', height: '100vh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
-      {/* Element 0 — always ref=vid0, always src=slots[0] */}
+    <section style={{ position: 'relative', height: '100svh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
+      {/* Video slot 0 */}
       <video
         ref={vid0}
         src={getSrc(slots[0])}
@@ -149,7 +139,7 @@ export default function Hero({ article }: { article: Article | null }) {
           transition: `opacity ${FADE_MS}ms ease`, pointerEvents: 'none',
         }}
       />
-      {/* Element 1 — always ref=vid1, always src=slots[1] */}
+      {/* Video slot 1 */}
       <video
         ref={vid1}
         src={getSrc(slots[1])}
@@ -175,7 +165,24 @@ export default function Hero({ article }: { article: Article | null }) {
         background: 'linear-gradient(to top, rgba(10,10,10,1) 0%, transparent 100%)',
       }} />
 
-      {/* Hero text — bottom left */}
+      {/* Masthead — centred at 38% from top */}
+      <div className="hero-masthead" style={{
+        position: 'absolute', top: '38%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 20, textAlign: 'center', whiteSpace: 'nowrap', pointerEvents: 'none',
+      }}>
+        <span style={{
+          fontFamily: 'Cormorant Garamond, serif', fontWeight: 300,
+          fontSize: 'clamp(32px, 8vw, 52px)',
+          letterSpacing: '0.55em',
+          color: 'rgba(255,255,255,0.88)', textTransform: 'uppercase',
+          display: 'block',
+        }}>
+          L&apos;ÉCHELON
+        </span>
+      </div>
+
+      {/* Hero text — bottom left desktop, full-width mobile */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 20, padding: '0 56px 56px', maxWidth: 700 }} className="hero-text-pad">
         <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.80)', marginBottom: 14 }}>
           {displayArticle.category?.hero_label ?? "L'Échelon · Spring 2026"}
@@ -189,7 +196,7 @@ export default function Hero({ article }: { article: Article | null }) {
           style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(56px, 7.5vw, 100px)', lineHeight: 0.95, color: '#fff', letterSpacing: '-0.01em', marginBottom: 20, maxWidth: 650 }}
           dangerouslySetInnerHTML={{ __html: displayArticle.title }}
         />
-        <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, maxWidth: 420, marginBottom: 24 }}>
+        <p className="hero-deck" style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 12, color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, maxWidth: 420, marginBottom: 24 }}>
           {displayArticle.excerpt}
         </p>
         {displayArticle.slug !== '#' && (
@@ -207,7 +214,7 @@ export default function Hero({ article }: { article: Article | null }) {
                 {displayArticle.is_premium ? 'Members' : 'Free'}
               </span>
             </div>
-            <Link href={`/article/${displayArticle.slug}`} className="btn-hero">
+            <Link href={`/article/${displayArticle.slug}`} className="btn-hero hero-cta">
               Read the story
             </Link>
           </>
@@ -216,12 +223,22 @@ export default function Hero({ article }: { article: Article | null }) {
 
       <style>{`
         @media (max-width: 768px) {
-          .hero-text-pad { padding: 0 20px 44px !important; }
-          .hero-text-pad h1 { font-size: clamp(44px, 9vw, 68px) !important; }
+          .hero-masthead span { letter-spacing: 0.35em !important; }
+          .hero-text-pad {
+            padding: 0 24px 48px !important;
+            right: 0 !important;
+            max-width: 100% !important;
+          }
+          .hero-text-pad h1 { font-size: clamp(34px, 9vw, 52px) !important; max-width: 100% !important; }
+          .hero-cta { padding-top: 16px !important; min-height: 44px !important; display: inline-flex !important; align-items: center !important; }
         }
         @media (max-width: 480px) {
-          .hero-text-pad { padding: 0 16px 36px !important; }
-          .hero-text-pad h1 { font-size: clamp(38px, 10vw, 56px) !important; }
+          .hero-text-pad { padding: 0 20px 36px !important; }
+          .hero-text-pad h1 { font-size: clamp(30px, 10vw, 48px) !important; }
+          .hero-deck { display: none !important; }
+        }
+        @media (max-width: 380px) {
+          .hero-masthead span { letter-spacing: 0.20em !important; font-size: 28px !important; }
         }
       `}</style>
     </section>

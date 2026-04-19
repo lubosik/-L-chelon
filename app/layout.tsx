@@ -58,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Nav />
         <SubscribePopup />
-        <main style={{ paddingTop: 56 }}>
+        <main className="main-content">
           {children}
         </main>
         <Footer />

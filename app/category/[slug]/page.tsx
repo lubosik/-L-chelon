@@ -92,14 +92,14 @@ export default async function CategoryPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(categorySchema) }} />
 
       {/* CATEGORY HERO */}
-      <section style={{ position: 'relative', height: '100vh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
+      <section style={{ position: 'relative', height: '100svh', minHeight: 600, overflow: 'hidden', background: '#0A0A0A' }}>
         <CategoryVideoLoop slug={category.hero_video_slug ?? slug} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 3 }} />
         <div style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 40px', pointerEvents: 'none' }}>
           <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.35em', textTransform: 'uppercase', marginBottom: 12 }}>
             {category.french_name}
           </p>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(72px, 10vw, 128px)', color: '#ffffff', letterSpacing: '0.02em', lineHeight: 0.90, marginBottom: 20 }}>
+          <h1 className="cat-hero-title" style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(72px, 10vw, 128px)', color: '#ffffff', letterSpacing: '0.02em', lineHeight: 0.90, marginBottom: 20 }}>
             {category.english_sub ?? category.name}
           </h1>
           {tagline && (
@@ -122,14 +122,14 @@ export default async function CategoryPage({ params }: Props) {
           </p>
           {featuredArticle ? (
             <div style={{ display: 'grid', gridTemplateColumns: '58% 42%', gap: 0 }} className="cat-featured-grid">
-              <div style={{ position: 'relative', height: 520, background: '#E8E5E0', overflow: 'hidden' }}>
+              <div className="cat-featured-img" style={{ position: 'relative', height: 520, background: '#E8E5E0', overflow: 'hidden' }}>
                 {featuredArticle.cover_image ? (
                   <Image src={featuredArticle.cover_image.url} alt={featuredArticle.title} fill style={{ objectFit: 'cover' }} priority />
                 ) : (
                   <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0' }} />
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 56 }}>
+              <div className="cat-featured-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 56 }}>
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 16 }}>
                   Cover Story · {category.french_name}
                 </p>
@@ -230,12 +230,17 @@ export default async function CategoryPage({ params }: Props) {
 
       <style>{`
         @media (max-width: 768px) {
-          .cat-cover-section { padding: 48px 20px !important; }
+          .cat-hero-title { font-size: clamp(52px, 12vw, 80px) !important; }
+          .cat-cover-section { padding: 48px 24px !important; }
           .cat-featured-grid { grid-template-columns: 1fr !important; }
-          .cat-latest-section { padding: 48px 20px !important; }
+          .cat-featured-img { height: 56vw !important; }
+          .cat-featured-body { padding-left: 0 !important; padding-top: 24px !important; }
+          .cat-latest-section { padding: 48px 24px !important; }
           .cat-latest-grid { grid-template-columns: 1fr !important; }
-          .cat-intro { padding: 40px 20px !important; }
-          .cat-feed { padding: 0 20px 48px !important; }
+          .cat-intro { padding: 40px 24px !important; }
+          .cat-feed { padding: 0 24px 48px !important; }
+          .alt-article { grid-template-columns: 1fr !important; direction: ltr !important; gap: 24px !important; padding: 40px 0 !important; }
+          .alt-article-img { height: 60vw !important; }
         }
       `}</style>
     </>
@@ -252,7 +257,7 @@ function AlternatingArticle({ article, reverse }: { article: Article; reverse: b
       borderBottom: '1px solid #E2DED8',
       direction: reverse ? 'rtl' : 'ltr',
     }} className="alt-article">
-      <div style={{ position: 'relative', height: 380, background: '#E8E5E0', overflow: 'hidden', direction: 'ltr' }}>
+      <div className="alt-article-img" style={{ position: 'relative', height: 380, background: '#E8E5E0', overflow: 'hidden', direction: 'ltr' }}>
         {article.cover_image && (
           <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 50vw" />
         )}

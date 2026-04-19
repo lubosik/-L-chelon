@@ -27,6 +27,8 @@ const catLink: React.CSSProperties = {
   borderBottom: '1px solid transparent',
   transition: 'color 0.2s, border-color 0.2s',
   whiteSpace: 'nowrap',
+  minHeight: 'unset',
+  display: 'inline',
 }
 
 const utilLink: React.CSSProperties = {
@@ -42,6 +44,7 @@ const utilLink: React.CSSProperties = {
   border: 'none',
   cursor: 'pointer',
   padding: 0,
+  minHeight: 'unset',
 }
 
 export default function Nav() {
@@ -69,7 +72,7 @@ export default function Nav() {
 
   return (
     <>
-      <nav style={{
+      <nav className="site-nav" style={{
         position: 'fixed', top: 0, left: 0, right: 0,
         height: 60,
         background: '#FFFFFF',
@@ -82,33 +85,57 @@ export default function Nav() {
         columnGap: 40,
       }}>
 
-        {/* LEFT: category links + About */}
-        <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          {LEFT_CATS.map((cat) => (
+        {/* COL 1: desktop nav-left OR mobile hamburger */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="nav-left" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            {LEFT_CATS.map((cat) => (
+              <Link
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
+                style={catLink}
+                onMouseEnter={(e) => onCatEnter(e, cat.hero_video_slug)}
+                onMouseLeave={onCatLeave}
+              >
+                {cat.french_name}
+              </Link>
+            ))}
+            <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
             <Link
-              key={cat.slug}
-              href={`/category/${cat.slug}`}
+              href="/about"
               style={catLink}
-              onMouseEnter={(e) => onCatEnter(e, cat.hero_video_slug)}
-              onMouseLeave={onCatLeave}
+              onMouseEnter={onUtilEnter}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget as HTMLElement
+                el.style.color = '#666'
+                el.style.borderBottomColor = 'transparent'
+              }}
             >
-              {cat.french_name}
+              About
             </Link>
-          ))}
-          <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
-          <Link
-            href="/about"
-            style={catLink}
-            onMouseEnter={onUtilEnter}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = '#666'; (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}
+          </div>
+
+          {/* Mobile hamburger — left side */}
+          <button
+            className="hamburger"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            style={{
+              display: 'none',
+              width: 48, height: 48,
+              flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 5, background: 'none', border: 'none', cursor: 'pointer',
+              marginLeft: -12,
+            }}
           >
-            About
-          </Link>
+            <span style={{ display: 'block', width: 18, height: 1, background: '#111' }} />
+            <span style={{ display: 'block', width: 18, height: 1, background: '#111' }} />
+            <span style={{ display: 'block', width: 18, height: 1, background: '#111' }} />
+          </button>
         </div>
 
-        {/* CENTRE: emblem only */}
+        {/* COL 2: emblem */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', minHeight: 'unset' }}>
             <span style={{ position: 'relative', width: 38, height: 38, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="38" height="38" viewBox="0 0 38 38" fill="none" style={{ position: 'absolute' }}>
                 <circle cx="19" cy="19" r="18" stroke="#111" strokeWidth="0.75"/>
@@ -125,171 +152,241 @@ export default function Nav() {
           </Link>
         </div>
 
-        {/* RIGHT: category links + auth cluster */}
-        <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 24, justifyContent: 'flex-end' }}>
-          {RIGHT_CATS.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/category/${cat.slug}`}
-              style={catLink}
-              onMouseEnter={(e) => onCatEnter(e, cat.hero_video_slug)}
-              onMouseLeave={onCatLeave}
-            >
-              {cat.french_name}
-            </Link>
-          ))}
-
-          {/* Divider */}
-          <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
-
-          {/* Auth */}
-          <SignedOut>
-            <button
-              style={utilLink}
-              onMouseOver={onUtilEnter}
-              onMouseOut={onUtilLeave}
-            >
-              <SignInButton mode="modal">
-                <span>Sign In</span>
-              </SignInButton>
-            </button>
-            <SignUpButton mode="modal">
-              <button style={{
-                fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
-                textTransform: 'uppercase', color: '#111', background: 'none',
-                border: '1px solid #ccc', padding: '6px 14px', cursor: 'pointer',
-                transition: 'border-color 0.2s, color 0.2s', whiteSpace: 'nowrap',
-              }}
-                onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#111' }}
-                onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#ccc' }}
-              >
-                Sign Up
-              </button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-
-          {/* Subscribe CTA */}
-          <Link
-            href="/subscribe"
-            className="btn-primary"
-            style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0, letterSpacing: '0.16em' }}
-          >
-            Subscribe
-          </Link>
-        </div>
-
-        {/* Mobile hamburger */}
-        <button
-          className="hamburger"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Open menu"
-          style={{ display: 'none', position: 'absolute', right: 20, flexDirection: 'column', gap: 5, padding: 4 }}
-        >
-          <span style={{ display: 'block', width: 22, height: 1, background: '#111' }} />
-          <span style={{ display: 'block', width: 22, height: 1, background: '#111' }} />
-          <span style={{ display: 'block', width: 22, height: 1, background: '#111' }} />
-        </button>
-      </nav>
-
-      {/* Mobile drawer */}
-      {drawerOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.35)' }}
-          onClick={() => setDrawerOpen(false)}
-        >
-          <div
-            style={{
-              position: 'absolute', top: 0, right: 0, bottom: 0,
-              width: '80vw', maxWidth: 320,
-              background: '#fff', borderLeft: '1px solid #E2DED8',
-              padding: '64px 32px 40px',
-              display: 'flex', flexDirection: 'column', gap: 0,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setDrawerOpen(false)}
-              style={{ position: 'absolute', top: 20, right: 20, color: '#888', fontSize: 18, cursor: 'pointer', background: 'none', border: 'none', lineHeight: 1 }}
-            >
-              ✕
-            </button>
-
-            {/* Categories */}
-            {ALL_CATS.map((cat) => (
+        {/* COL 3: desktop nav-right OR mobile subscribe */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 24 }}>
+          <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            {RIGHT_CATS.map((cat) => (
               <Link
                 key={cat.slug}
                 href={`/category/${cat.slug}`}
-                onClick={() => setDrawerOpen(false)}
-                style={{
-                  fontFamily: 'Lato, sans-serif', fontSize: 10, letterSpacing: '0.20em',
-                  textTransform: 'uppercase', color: '#333',
-                  borderBottom: '1px solid #F0EDE8', paddingBottom: 18, marginBottom: 18,
-                  textDecoration: 'none',
-                }}
+                style={catLink}
+                onMouseEnter={(e) => onCatEnter(e, cat.hero_video_slug)}
+                onMouseLeave={onCatLeave}
               >
                 {cat.french_name}
               </Link>
             ))}
-
-            {/* About */}
-            <Link
-              href="/about"
-              onClick={() => setDrawerOpen(false)}
-              style={{
-                fontFamily: 'Lato, sans-serif', fontSize: 10, letterSpacing: '0.20em',
-                textTransform: 'uppercase', color: '#888',
-                borderBottom: '1px solid #F0EDE8', paddingBottom: 18, marginBottom: 24,
-                textDecoration: 'none',
-              }}
-            >
-              About
-            </Link>
-
-            {/* Auth row */}
-            <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <button style={{
-                    flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
-                    textTransform: 'uppercase', color: '#555', background: 'none',
-                    border: '1px solid #ccc', padding: '10px 0', cursor: 'pointer',
-                  }}>
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button style={{
-                    flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
-                    textTransform: 'uppercase', color: '#fff', background: '#111',
-                    border: 'none', padding: '10px 0', cursor: 'pointer',
-                  }}>
-                    Sign Up
-                  </button>
-                </SignUpButton>
-              </SignedOut>
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            </div>
-
+            <span style={{ width: 1, height: 14, background: '#E2DED8', flexShrink: 0 }} />
+            <SignedOut>
+              <button style={utilLink} onMouseOver={onUtilEnter} onMouseOut={onUtilLeave}>
+                <SignInButton mode="modal"><span>Sign In</span></SignInButton>
+              </button>
+              <SignUpButton mode="modal">
+                <button style={{
+                  fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                  textTransform: 'uppercase', color: '#111', background: 'none',
+                  border: '1px solid #ccc', padding: '6px 14px', cursor: 'pointer',
+                  transition: 'border-color 0.2s', whiteSpace: 'nowrap',
+                }}
+                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#111' }}
+                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ccc' }}
+                >
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn><UserButton /></SignedIn>
             <Link
               href="/subscribe"
               className="btn-primary"
-              onClick={() => setDrawerOpen(false)}
-              style={{ textAlign: 'center', letterSpacing: '0.16em' }}
+              style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0, letterSpacing: '0.16em', minHeight: 'unset', display: 'inline-block' }}
             >
               Subscribe
             </Link>
           </div>
+
+          {/* Mobile: subscribe button — right side */}
+          <Link
+            className="nav-subscribe-mobile"
+            href="/subscribe"
+            style={{
+              display: 'none',
+              fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+              textTransform: 'uppercase', color: '#fff', background: '#111',
+              padding: '8px 16px', textDecoration: 'none',
+              minHeight: 44, alignItems: 'center',
+            }}
+          >
+            Subscribe
+          </Link>
         </div>
-      )}
+      </nav>
+
+      {/* Backdrop */}
+      <div
+        onClick={() => setDrawerOpen(false)}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 199,
+          background: 'rgba(0,0,0,0.45)',
+          opacity: drawerOpen ? 1 : 0,
+          pointerEvents: drawerOpen ? 'auto' : 'none',
+          transition: 'opacity 0.35s ease',
+        }}
+      />
+
+      {/* Drawer — slides from left */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, bottom: 0,
+        width: '85vw', maxWidth: 360,
+        background: '#ffffff',
+        borderRight: '1px solid #E2DED8',
+        zIndex: 200,
+        transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto',
+      }}>
+        {/* Close button */}
+        <button
+          onClick={() => setDrawerOpen(false)}
+          style={{
+            position: 'absolute', top: 16, right: 16,
+            width: 36, height: 36,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#888', fontSize: 18, cursor: 'pointer',
+            background: 'none', border: 'none', lineHeight: 1,
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Header */}
+        <div style={{ padding: '24px 24px 0' }}>
+          <div style={{
+            fontFamily: 'Cormorant Garamond, serif', fontWeight: 300,
+            fontSize: 28, color: '#111', marginBottom: 6,
+          }}>
+            L&apos;Échelon
+          </div>
+          <div style={{
+            fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa',
+            letterSpacing: '0.22em', textTransform: 'uppercase',
+          }}>
+            The Intelligence of Luxury
+          </div>
+          <div style={{ height: 1, background: '#E2DED8', margin: '20px 0' }} />
+        </div>
+
+        {/* Nav links */}
+        <div style={{ flex: 1 }}>
+          {ALL_CATS.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/category/${cat.slug}`}
+              onClick={() => setDrawerOpen(false)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                height: 56, padding: '0 24px',
+                fontFamily: 'Lato, sans-serif', fontSize: 11, letterSpacing: '0.18em',
+                textTransform: 'uppercase', color: '#555',
+                borderBottom: '1px solid #F0EDE8',
+                textDecoration: 'none',
+              }}
+            >
+              <span>{cat.french_name}</span>
+              <span style={{ color: '#bbb', fontFamily: 'sans-serif' }}>→</span>
+            </Link>
+          ))}
+
+          <div style={{ height: 1, background: '#E2DED8', margin: '8px 0' }} />
+
+          <Link
+            href="/about"
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              height: 56, padding: '0 24px',
+              fontFamily: 'Lato, sans-serif', fontSize: 11, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#555',
+              borderBottom: '1px solid #F0EDE8',
+              textDecoration: 'none',
+            }}
+          >
+            <span>About</span>
+            <span style={{ color: '#bbb', fontFamily: 'sans-serif' }}>→</span>
+          </Link>
+
+          <Link
+            href="/subscribe"
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              height: 56, padding: '0 24px',
+              fontFamily: 'Lato, sans-serif', fontSize: 11, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#555',
+              borderBottom: '1px solid #F0EDE8',
+              textDecoration: 'none',
+            }}
+          >
+            <span>Subscribe</span>
+            <span style={{ color: '#bbb', fontFamily: 'sans-serif' }}>→</span>
+          </Link>
+
+          <Link
+            href="/intelligence"
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              height: 56, padding: '0 24px',
+              fontFamily: 'Lato, sans-serif', fontSize: 11, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#555',
+              borderBottom: '1px solid #F0EDE8',
+              textDecoration: 'none',
+            }}
+          >
+            <span>Intelligence</span>
+            <span style={{
+              fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: '#fff', background: '#111',
+              padding: '3px 8px',
+            }}>
+              Members
+            </span>
+          </Link>
+
+          {/* Auth */}
+          <div style={{ padding: '20px 24px', display: 'flex', gap: 10 }}>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button style={{
+                  flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                  textTransform: 'uppercase', color: '#555', background: 'none',
+                  border: '1px solid #ccc', padding: '10px 0', cursor: 'pointer', minHeight: 44,
+                }}>
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton mode="modal">
+                <button style={{
+                  flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                  textTransform: 'uppercase', color: '#fff', background: '#111',
+                  border: 'none', padding: '10px 0', cursor: 'pointer', minHeight: 44,
+                }}>
+                  Sign Up
+                </button>
+              </SignUpButton>
+            </SignedOut>
+            <SignedIn><UserButton /></SignedIn>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: '16px 24px',
+          borderTop: '1px solid #F0EDE8',
+          fontFamily: 'Lato, sans-serif', fontSize: 8,
+          color: '#aaa', letterSpacing: '0.10em',
+        }}>
+          © 2026 Rosen Relations
+        </div>
+      </div>
 
       <style>{`
-        @media (max-width: 1200px) {
+        .site-nav { padding-top: env(safe-area-inset-top); }
+        @media (max-width: 768px) {
+          .site-nav { height: 56px !important; padding: 0 16px !important; column-gap: 8px !important; }
           .hamburger { display: flex !important; }
+          .nav-subscribe-mobile { display: inline-flex !important; }
           .nav-left, .nav-right { display: none !important; }
         }
       `}</style>

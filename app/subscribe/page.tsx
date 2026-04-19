@@ -40,14 +40,13 @@ export default function SubscribePage() {
       })
     } catch { /* ignore */ }
     setEmailStatus('done')
-    // Open Clerk sign-up with email pre-filled after short delay
     setTimeout(() => {
       openSignUp({ initialValues: { emailAddress: email } })
     }, 800)
   }
 
   return (
-    <div style={{ background: '#F8F7F5', minHeight: '80vh', padding: '80px 40px' }}>
+    <div style={{ background: '#F8F7F5', minHeight: '80vh', padding: '80px 40px' }} className="subscribe-page">
       <div style={{ maxWidth: 840, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 9, color: '#aaa', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 12 }}>
@@ -82,7 +81,6 @@ export default function SubscribePage() {
               ))}
             </div>
 
-            {/* Email form → subscribe → then Clerk sign-up */}
             <div style={{ marginTop: 'auto' }}>
               <SignedOut>
                 {emailStatus === 'done' ? (
@@ -100,7 +98,7 @@ export default function SubscribePage() {
                       style={{
                         background: 'transparent', border: 'none',
                         borderBottom: '1px solid #D0CCC8', color: '#111',
-                        fontFamily: 'Lato, sans-serif', fontSize: 12,
+                        fontFamily: 'Lato, sans-serif', fontSize: 16,
                         padding: '10px 0', outline: 'none', borderRadius: 0,
                       }}
                     />
@@ -108,7 +106,7 @@ export default function SubscribePage() {
                       type="submit"
                       disabled={emailStatus === 'sending'}
                       className="btn-primary"
-                      style={{ fontSize: 9, padding: '12px 0', cursor: 'pointer', border: 'none', opacity: emailStatus === 'sending' ? 0.7 : 1 }}
+                      style={{ fontSize: 9, padding: '12px 0', cursor: 'pointer', border: 'none', opacity: emailStatus === 'sending' ? 0.7 : 1, minHeight: 48 }}
                     >
                       {emailStatus === 'sending' ? '...' : 'Get Started'}
                     </button>
@@ -143,12 +141,12 @@ export default function SubscribePage() {
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }} className="tier-buttons">
               <button
                 onClick={() => handleSubscribe('monthly')}
                 disabled={loading === 'monthly'}
                 className="btn-primary"
-                style={{ flex: 1, opacity: loading === 'monthly' ? 0.7 : 1, fontSize: 9, padding: '13px 0', cursor: 'pointer', border: 'none' }}
+                style={{ flex: 1, opacity: loading === 'monthly' ? 0.7 : 1, fontSize: 9, padding: '13px 0', cursor: 'pointer', border: 'none', minHeight: 48 }}
               >
                 {loading === 'monthly' ? '...' : 'Monthly'}
               </button>
@@ -156,7 +154,7 @@ export default function SubscribePage() {
                 onClick={() => handleSubscribe('annual')}
                 disabled={loading === 'annual'}
                 className="btn-pill"
-                style={{ flex: 1, opacity: loading === 'annual' ? 0.7 : 1, fontSize: 9, padding: '13px 0', cursor: 'pointer', justifyContent: 'center' }}
+                style={{ flex: 1, opacity: loading === 'annual' ? 0.7 : 1, fontSize: 9, padding: '13px 0', cursor: 'pointer', justifyContent: 'center', minHeight: 48 }}
               >
                 {loading === 'annual' ? '...' : 'Annual · Save 31%'}
               </button>
@@ -179,7 +177,14 @@ export default function SubscribePage() {
         </div>
       </div>
 
-      <style>{`@media (max-width: 768px) { .tier-grid { grid-template-columns: 1fr !important; } }`}</style>
+      <style>{`
+        @media (max-width: 768px) {
+          .subscribe-page { padding: 48px 24px !important; }
+          .tier-grid { grid-template-columns: 1fr !important; }
+          .tier-buttons { flex-direction: column !important; }
+          .tier-buttons button { width: 100% !important; }
+        }
+      `}</style>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Article, Category, IndexDataPoint, TickerItem } from '@/lib/strapi'
+import { getStrapiImageUrl } from '@/lib/strapi'
 import Ticker from '@/components/Ticker'
 import Hero from '@/components/Hero'
 
@@ -42,16 +43,16 @@ const faqSchema = {
 }
 
 const CATEGORY_CONFIG = [
-  { slug: 'la-mode',       french: 'LA MODE',        english: 'Fashion',    tagline: 'Where the atelier meets the algorithm.',       img: '/heroes/la-mode.jpg',       objPos: 'center' },
-  { slug: 'la-vitesse',    french: 'LA VITESSE',      english: 'Motorsport', tagline: 'The pursuit of the perfect lap.',               img: '/heroes/la-vitesse.jpg',    objPos: 'center' },
-  { slug: 'lhorlogerie',   french: "L'HORLOGERIE",    english: 'Watches',    tagline: 'Time, measured in masterpieces.',               img: '/heroes/lhorlogerie.jpg',   objPos: 'center' },
-  { slug: 'lequitation',   french: "L'ÉQUITATION",    english: 'Equestrian', tagline: 'The oldest luxury sport, reimagined.',          img: '/heroes/lequitation.jpg',   objPos: 'center top' },
-  { slug: 'lart-de-vivre', french: "L'ART DE VIVRE",  english: 'Lifestyle',  tagline: 'The art of living without compromise.',         img: '/heroes/lart-de-vivre.jpg', objPos: 'center' },
+  { slug: 'la-mode',       french: 'LA MODE',        english: 'Fashion',    tagline: 'Where the atelier meets the algorithm.',       img: '/heroes/la-mode-grid.jpg',       objPos: 'center top' },
+  { slug: 'la-vitesse',    french: 'LA VITESSE',      english: 'Motorsport', tagline: 'The pursuit of the perfect lap.',               img: '/heroes/la-vitesse-grid.jpg',    objPos: 'center top' },
+  { slug: 'lhorlogerie',   french: "L'HORLOGERIE",    english: 'Watches',    tagline: 'Time, measured in masterpieces.',               img: '/heroes/lhorlogerie-grid.jpg',   objPos: 'center top' },
+  { slug: 'lequitation',   french: "L'ÉQUITATION",    english: 'Equestrian', tagline: 'The oldest luxury sport, reimagined.',          img: '/heroes/lequitation-grid.jpg',   objPos: 'center top' },
+  { slug: 'lart-de-vivre', french: "L'ART DE VIVRE",  english: 'Lifestyle',  tagline: 'The art of living without compromise.',         img: '/heroes/lart-de-vivre-grid.jpg', objPos: 'center top' },
 ]
 
 export default function HomePage() {
   const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null)
-  const [, setCategories] = useState<Category[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([])
   const [indexData, setIndexData] = useState<IndexDataPoint[]>([])
   const [articles, setArticles] = useState<Article[]>([])
@@ -65,12 +66,27 @@ export default function HomePage() {
     async function load() {
       try {
         const [catRes, tickerRes, indexRes, articlesRes] = await Promise.all([
-          fetch(`${base}/api/categories?populate=*&sort=name:asc`).then((r) => r.json()).catch(() => ({ data: [] })),
+          fetch(`${base}/api/categories?populate[grid_image][fields][0]=url&populate[grid_image][fields][1]=alternativeText&populate[grid_image][fields][2]=width&populate[grid_image][fields][3]=height&sort=name:asc`).then((r) => r.json()).catch(() => ({ data: [] })),
           fetch(`${base}/api/ticker-items?filters[active][$eq]=true`).then((r) => r.json()).catch(() => ({ data: [] })),
           fetch(`${base}/api/index-data-points?sort=id:asc&pagination[limit]=6`).then((r) => r.json()).catch(() => ({ data: [] })),
           fetch(`${base}/api/articles?populate=cover_image,category,author,issue&sort=published_at:desc&pagination[limit]=10`).then((r) => r.json()).catch(() => ({ data: [] })),
         ])
-        const flatten = (item: { id: number; attributes?: Record<string, unknown> }) => item.attributes ? { id: item.id, ...item.attributes } : item
+        const flatten = (item: { id: number; attributes?: Record<string, unknown> }) => {
+          if (!item.attributes) return item
+          const attrs = item.attributes
+          const result: Record<string, unknown> = { id: item.id }
+          for (const key of Object.keys(attrs)) {
+            const val = attrs[key] as { data?: unknown } | null | undefined
+            if (val && typeof val === 'object' && 'data' in val) {
+              const d = val.data as { id: number; attributes?: Record<string, unknown> } | null
+              if (d && d.attributes) result[key] = { id: d.id, ...d.attributes }
+              else result[key] = null
+            } else {
+              result[key] = val
+            }
+          }
+          return result
+        }
         const flatList = (res: { data?: unknown[] }) => (res?.data ?? []).map((item) => flatten(item as { id: number; attributes?: Record<string, unknown> }))
         setCategories(flatList(catRes) as Category[])
         setTickerItems(flatList(tickerRes) as TickerItem[])
@@ -114,7 +130,7 @@ export default function HomePage() {
 
       {/* SECTION 2: TICKER BAR */}
       <div style={{ background: '#111', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 56px', height: 44 }} className="ticker-bar">
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 56px', height: 44, WebkitOverflowScrolling: 'touch' } as React.CSSProperties} className="ticker-bar">
           <Ticker items={tickerItems} />
         </div>
       </div>
@@ -122,32 +138,44 @@ export default function HomePage() {
       {/* SECTION 3: CATEGORY GRID */}
       <section style={{ width: '100%', overflow: 'hidden' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', height: 420 }} className="cat-grid-hp">
-          {CATEGORY_CONFIG.map((cat, i) => (
-            <Link key={cat.slug} href={`/category/${cat.slug}`} style={{ position: 'relative', overflow: 'hidden', display: 'block', borderRight: i < 4 ? '1px solid rgba(255,255,255,0.06)' : 'none', textDecoration: 'none' }}
-              className="cat-cell">
-              <Image
-                src={cat.img}
-                alt={cat.english}
-                fill
-                style={{ objectFit: 'cover', objectPosition: cat.objPos, transition: 'transform 0.6s ease' }}
-                sizes="20vw"
-                priority={i < 3}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.20) 60%, transparent 100%)', transition: 'background 0.3s ease' }} className="cat-overlay" />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 24px 28px' }}>
-                <div style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 11, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 6 }}>
-                  {cat.french}
+          {CATEGORY_CONFIG.map((cat, i) => {
+            const strapiCat = categories.find((c) => c.slug === cat.slug)
+            const gridImgUrl = strapiCat?.grid_image?.url
+              ? getStrapiImageUrl(strapiCat.grid_image.url)
+              : cat.img
+            const gridImgAlt = strapiCat?.grid_image_alt ?? cat.english
+
+            return (
+              <Link
+                key={cat.slug}
+                href={`/category/${cat.slug}`}
+                style={{ position: 'relative', overflow: 'hidden', display: 'block', borderRight: i < 4 ? '1px solid rgba(255,255,255,0.06)' : 'none', textDecoration: 'none' }}
+                className="cat-cell"
+              >
+                <Image
+                  src={gridImgUrl}
+                  alt={gridImgAlt}
+                  fill
+                  style={{ objectFit: 'cover', objectPosition: cat.objPos, transition: 'transform 0.6s ease' }}
+                  sizes="(max-width: 768px) 100vw, 20vw"
+                  priority={i < 3}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.30) 50%, rgba(0,0,0,0.10) 100%)', transition: 'background 0.3s ease' }} className="cat-overlay" />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 24px 28px', zIndex: 2 }}>
+                  <div style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 9, color: 'rgba(255,255,255,0.50)', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 6 }}>
+                    {cat.french}
+                  </div>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 32, color: '#ffffff', lineHeight: 1.1, marginBottom: 6 }} className="cat-english">
+                    {cat.english}
+                  </div>
+                  <div style={{ width: 0, height: 1, background: '#fff', transition: 'width 0.3s ease', marginBottom: 8 }} className="cat-underline" />
+                  <div style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.06em' }}>
+                    {cat.tagline}
+                  </div>
                 </div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 22, color: '#ffffff', lineHeight: 1.1, marginBottom: 6 }} className="cat-english">
-                  {cat.english}
-                </div>
-                <div style={{ width: 0, height: 1, background: '#fff', transition: 'width 0.3s ease', marginBottom: 8 }} className="cat-underline" />
-                <div style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.06em' }}>
-                  {cat.tagline}
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </div>
       </section>
 
@@ -159,19 +187,19 @@ export default function HomePage() {
           </p>
           {featuredArticle ? (
             <div style={{ display: 'grid', gridTemplateColumns: '58% 42%', gap: 0 }} className="featured-grid">
-              <div style={{ position: 'relative', height: 560, background: '#E8E5E0', overflow: 'hidden' }}>
+              <div className="featured-img-wrap" style={{ position: 'relative', height: 560, background: '#E8E5E0', overflow: 'hidden' }}>
                 {featuredArticle.cover_image ? (
                   <Image src={featuredArticle.cover_image.url} alt={featuredArticle.title} fill style={{ objectFit: 'cover' }} priority />
                 ) : (
                   <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0' }} />
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 56 }}>
+              <div className="featured-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 56 }}>
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 16 }}>
                   Cover Story · {featuredArticle.category?.french_name ?? "L'Échelon"}
                 </p>
                 <h2
-                  style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(32px, 3.5vw, 52px)', color: '#111', lineHeight: 1.05, maxWidth: 420, marginBottom: 20 }}
+                  style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(24px, 3.5vw, 52px)', color: '#111', lineHeight: 1.05, maxWidth: 420, marginBottom: 20 }}
                   dangerouslySetInnerHTML={{ __html: featuredArticle.title }}
                 />
                 {featuredArticle.excerpt && (
@@ -186,6 +214,7 @@ export default function HomePage() {
                   fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: '#111',
                   borderBottom: '1px solid #333', paddingBottom: 3, width: 'fit-content',
                   textDecoration: 'none', transition: 'letter-spacing 0.2s',
+                  minHeight: 44, display: 'inline-flex', alignItems: 'flex-end',
                 }}
                   onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.letterSpacing = '0.02em' }}
                   onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.letterSpacing = '0' }}
@@ -229,7 +258,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SECTION 6: L'ÉCHELON INDEX — 3D scroll-reveal */}
+      {/* SECTION 6: L'ÉCHELON INDEX */}
       <section
         ref={indexRef}
         style={{ background: '#111111', padding: '64px 56px' }}
@@ -277,6 +306,10 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+          {/* Mobile scroll hint */}
+          <div className="index-scroll-hint" style={{ display: 'none', textAlign: 'right', paddingTop: 10, fontFamily: 'Lato, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.12em' }}>
+            scroll →
+          </div>
           <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '40px 0 0' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 32, flexWrap: 'wrap', gap: 20 }} className="index-footer">
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(255,255,255,0.40)' }}>
@@ -286,7 +319,7 @@ export default function HomePage() {
               background: '#ffffff', color: '#111111',
               fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase',
               padding: '12px 28px', textDecoration: 'none', borderRadius: 0,
-              transition: 'background 0.2s',
+              transition: 'background 0.2s', display: 'inline-flex', alignItems: 'center',
             }}
               onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = '#E8E5E0' }}
               onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = '#ffffff' }}
@@ -300,18 +333,18 @@ export default function HomePage() {
       {/* SECTION 7: ABOUT STRIP */}
       <section style={{ background: '#ffffff', padding: '80px 56px' }} className="about-strip">
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }} className="about-strip-grid">
-          <div>
+          <div className="about-main">
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 13, color: '#aaa', letterSpacing: '0.10em', marginBottom: 16 }}>
               About L&apos;Échelon
             </p>
-            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(28px, 3vw, 44px)', color: '#111', lineHeight: 1.1, maxWidth: 400, marginBottom: 24 }}>
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(22px, 3vw, 44px)', color: '#111', lineHeight: 1.1, maxWidth: 400, marginBottom: 24 }}>
               A publication built on the belief that luxury is not a price point. It is a standard of attention.
             </h2>
             <div style={{ width: 40, height: 1, background: '#E2DED8', marginBottom: 24 }} />
             <Link href="/about" style={{
               fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: '#555',
               borderBottom: '1px solid #ccc', paddingBottom: 3, textDecoration: 'none', cursor: 'pointer',
-              transition: 'color 0.2s, border-color 0.2s',
+              transition: 'color 0.2s, border-color 0.2s', display: 'inline-flex', alignItems: 'flex-end', minHeight: 44,
             }}
               onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#111'; el.style.borderBottomColor = '#333' }}
               onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#555'; el.style.borderBottomColor = '#ccc' }}
@@ -319,8 +352,8 @@ export default function HomePage() {
               Read our story
             </Link>
           </div>
-          <div>
-            <blockquote style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(22px, 2.5vw, 36px)', color: '#111', lineHeight: 1.25, maxWidth: 480, margin: 0 }}>
+          <div className="about-quote">
+            <blockquote style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(18px, 2.5vw, 36px)', color: '#111', lineHeight: 1.25, maxWidth: 480, margin: 0 }}>
               &ldquo;A publication for those who move between paddocks, polo fields, and Paris ateliers with equal fluency. Five pillars. One sensibility.&rdquo;
             </blockquote>
             <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.20em', textTransform: 'uppercase', marginTop: 20 }}>
@@ -351,7 +384,7 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 8: NEWSLETTER CAPTURE */}
-      <section style={{ background: '#0A0A0A', padding: '80px 56px', textAlign: 'center' }}>
+      <section style={{ background: '#0A0A0A', padding: '80px 56px', textAlign: 'center' }} className="newsletter-section">
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 11, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.32em', textTransform: 'uppercase', marginBottom: 20 }}>
             The Intelligence of Luxury
@@ -377,7 +410,7 @@ export default function HomePage() {
                 style={{
                   flex: 1, background: 'transparent', border: 'none',
                   borderBottom: '1px solid rgba(255,255,255,0.25)',
-                  color: '#fff', fontFamily: 'Lato, sans-serif', fontSize: 12,
+                  color: '#fff', fontFamily: 'Lato, sans-serif', fontSize: 16,
                   padding: '12px 0', outline: 'none', borderRadius: 0,
                 }}
                 onFocus={(e) => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'rgba(255,255,255,0.70)' }}
@@ -390,7 +423,7 @@ export default function HomePage() {
                   background: '#fff', color: '#111', fontFamily: 'Lato, sans-serif', fontSize: 9,
                   letterSpacing: '0.22em', textTransform: 'uppercase', padding: '12px 24px',
                   border: 'none', borderRadius: 0, cursor: 'pointer', flexShrink: 0,
-                  transition: 'background 0.2s',
+                  transition: 'background 0.2s', minHeight: 44,
                 }}
                 onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = '#E8E5E0' }}
                 onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = '#fff' }}
@@ -406,29 +439,93 @@ export default function HomePage() {
       </section>
 
       <style>{`
+        /* Category grid */
         .cat-grid-hp { height: 420px; }
         .cat-cell:hover .cat-overlay { background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.30) 60%, transparent 100%) !important; }
         .cat-cell:hover img { transform: scale(1.03); }
         .cat-cell:hover .cat-underline { width: 32px !important; }
+
+        /* Tablet: 3 columns */
         @media (max-width: 1024px) {
           .cat-grid-hp { grid-template-columns: repeat(3, 1fr) !important; height: auto !important; }
           .cat-cell { height: 280px; display: block; }
         }
+
+        /* Mobile */
         @media (max-width: 768px) {
-          .cat-grid-hp { grid-template-columns: 1fr !important; }
-          .cat-cell { height: 260px; display: block; }
+          /* Category grid: vertical stack, portrait cells */
+          .cat-grid-hp { grid-template-columns: 1fr !important; height: auto !important; }
+          .cat-cell { height: 75vw !important; display: block; border-right: none !important; border-bottom: 1px solid #1a1a1a; }
+          .cat-cell img { object-position: center center !important; }
+          .cat-english { font-size: 32px !important; }
+
+          /* Featured article */
           .featured-grid { grid-template-columns: 1fr !important; }
-          .featured-section { padding: 48px 20px !important; }
-          .articles-section { padding: 48px 20px !important; }
-          .articles-grid { grid-template-columns: 1fr !important; }
-          .index-section { padding: 48px 20px !important; }
-          .index-grid { grid-template-columns: 1fr !important; }
-          .index-grid > div { border-left: none !important; border-top: 1px solid rgba(255,255,255,0.08); padding: 20px 0 !important; }
-          .about-strip { padding: 48px 20px !important; }
-          .about-strip-grid { grid-template-columns: 1fr !important; }
-          .faq-section { padding: 48px 20px !important; }
+          .featured-section { padding: 48px 24px !important; }
+          .featured-img-wrap { height: 56vw !important; }
+          .featured-body { padding-left: 0 !important; padding-top: 24px !important; }
+
+          /* Article grid: horizontal list cards */
+          .articles-section { padding: 48px 24px !important; }
+          .articles-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
+          .article-card-hp {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 16px !important;
+            border-bottom: 1px solid #E8E5E0 !important;
+            padding: 16px 0 !important;
+            background: transparent !important;
+          }
+          .article-card-hp-img { width: 120px !important; height: 90px !important; flex-shrink: 0 !important; }
+          .article-card-hp-body { flex: 1 !important; padding: 0 !important; }
+          .article-card-hp h3 { font-size: clamp(16px, 4vw, 22px) !important; margin-bottom: 8px !important; }
+          .article-card-hp p { font-size: 8px !important; }
+
+          /* Index: horizontal scroll */
+          .index-section { padding: 48px 24px !important; }
+          .index-grid {
+            display: flex !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+            scroll-snap-type: x mandatory !important;
+            gap: 0 !important;
+            margin: 0 -24px !important;
+            padding: 0 24px !important;
+          }
+          .index-grid::-webkit-scrollbar { display: none; }
+          .index-grid > div {
+            scroll-snap-align: start !important;
+            min-width: 160px !important;
+            flex-shrink: 0 !important;
+            border-left: 1px solid rgba(255,255,255,0.08) !important;
+            border-top: none !important;
+            padding: 0 20px !important;
+          }
+          .index-grid > div:first-child { border-left: none !important; padding-left: 0 !important; }
+          .index-scroll-hint { display: block !important; }
+          .index-footer { flex-direction: column !important; align-items: stretch !important; }
+          .index-footer a { width: 100% !important; justify-content: center !important; height: 44px !important; }
+
+          /* About strip */
+          .about-strip { padding: 48px 24px !important; }
+          .about-strip-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .about-quote { border-left: 2px solid #E2DED8; padding-left: 20px; order: -1; }
+
+          /* FAQ */
+          .faq-section { padding: 48px 24px !important; }
+
+          /* Newsletter */
+          .newsletter-section { padding: 48px 24px !important; }
           .newsletter-form { flex-direction: column !important; }
+          .newsletter-form button { width: 100% !important; }
+
+          /* Ticker */
           .ticker-bar { padding: 0 20px !important; }
+        }
+
+        @media (max-width: 480px) {
+          .cat-cell { height: 85vw !important; }
         }
       `}</style>
     </>
@@ -438,9 +535,9 @@ export default function HomePage() {
 function ArticleCardHP({ article }: { article: Article | null }) {
   if (!article) {
     return (
-      <div style={{ background: '#fff' }}>
-        <div style={{ width: '100%', height: 220, background: '#E8E5E0' }} />
-        <div style={{ padding: '20px 0 0' }}>
+      <div className="article-card-hp" style={{ background: '#fff' }}>
+        <div className="article-card-hp-img" style={{ width: '100%', height: 220, background: '#E8E5E0', flexShrink: 0 }} />
+        <div className="article-card-hp-body" style={{ padding: '20px 0 0' }}>
           <div style={{ width: 80, height: 8, background: '#E8E5E0', marginBottom: 10 }} />
           <div style={{ width: '90%', height: 12, background: '#F0EDE8', marginBottom: 6 }} />
           <div style={{ width: '70%', height: 12, background: '#F0EDE8' }} />
@@ -449,14 +546,14 @@ function ArticleCardHP({ article }: { article: Article | null }) {
     )
   }
   return (
-    <div style={{ background: '#fff' }}>
-      <Link href={`/article/${article.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
-        <div style={{ position: 'relative', width: '100%', height: 220, background: '#E8E5E0', overflow: 'hidden' }}>
+    <div className="article-card-hp" style={{ background: '#fff' }}>
+      <Link href={`/article/${article.slug}`} style={{ display: 'contents', textDecoration: 'none' }}>
+        <div className="article-card-hp-img" style={{ position: 'relative', width: '100%', height: 220, background: '#E8E5E0', overflow: 'hidden', flexShrink: 0 }}>
           {article.cover_image && (
-            <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 33vw" />
+            <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 120px, 33vw" />
           )}
         </div>
-        <div style={{ padding: '20px 0 0' }}>
+        <div className="article-card-hp-body" style={{ padding: '20px 0 0' }}>
           <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
             {article.category?.french_name ?? "L'Échelon"}
           </p>
