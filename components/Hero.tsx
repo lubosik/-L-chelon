@@ -165,23 +165,6 @@ export default function Hero({ article }: { article: Article | null }) {
         background: 'linear-gradient(to top, rgba(10,10,10,1) 0%, transparent 100%)',
       }} />
 
-      {/* Masthead — centred at 38% from top */}
-      <div className="hero-masthead" style={{
-        position: 'absolute', top: '38%', left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 20, textAlign: 'center', whiteSpace: 'nowrap', pointerEvents: 'none',
-      }}>
-        <span style={{
-          fontFamily: 'Cormorant Garamond, serif', fontWeight: 300,
-          fontSize: 'clamp(32px, 8vw, 52px)',
-          letterSpacing: '0.55em',
-          color: 'rgba(255,255,255,0.88)', textTransform: 'uppercase',
-          display: 'block',
-        }}>
-          L&apos;ÉCHELON
-        </span>
-      </div>
-
       {/* Hero text — bottom left desktop, full-width mobile */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 20, padding: '0 56px 56px', maxWidth: 700 }} className="hero-text-pad">
         <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.80)', marginBottom: 14 }}>
@@ -223,7 +206,6 @@ export default function Hero({ article }: { article: Article | null }) {
 
       <style>{`
         @media (max-width: 768px) {
-          .hero-masthead span { letter-spacing: 0.35em !important; }
           .hero-text-pad {
             padding: 0 24px 48px !important;
             right: 0 !important;
@@ -236,9 +218,6 @@ export default function Hero({ article }: { article: Article | null }) {
           .hero-text-pad { padding: 0 20px 36px !important; }
           .hero-text-pad h1 { font-size: clamp(30px, 10vw, 48px) !important; }
           .hero-deck { display: none !important; }
-        }
-        @media (max-width: 380px) {
-          .hero-masthead span { letter-spacing: 0.20em !important; font-size: 28px !important; }
         }
       `}</style>
     </section>
