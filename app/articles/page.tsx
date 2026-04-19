@@ -32,24 +32,25 @@ export default function ArticlesPage() {
 
   async function load(category: string, offset: number, append = false) {
     const base = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
-    const catFilter = category ? `&filters[category][slug][$eq]=${category}` : ''
-    const url = `${base}/api/articles?populate=cover_image,category,author&sort=publishedAt:desc&pagination[limit]=${LIMIT}&pagination[start]=${offset}${catFilter}`
+    const catFilter = category ? `&filters[category][slug][$eq]=${encodeURIComponent(category)}` : ''
+    const url = `${base}/api/articles?populate=*&sort=publishedAt:desc&pagination[limit]=${LIMIT}&pagination[start]=${offset}${catFilter}`
     try {
       const res = await fetch(url)
       const data = await res.json()
-      const flatten = (item: { id: number; attributes?: Record<string, unknown> }) => {
-        if (!item.attributes) return item
-        const r: Record<string, unknown> = { id: item.id }
-        for (const k of Object.keys(item.attributes)) {
-          const v = item.attributes[k] as { data?: unknown } | null
-          if (v && typeof v === 'object' && 'data' in v) {
-            const d = v.data as { id: number; attributes?: Record<string, unknown> } | null
-            r[k] = d && d.attributes ? { id: d.id, ...d.attributes } : null
-          } else { r[k] = v }
+      const normalise = (item: Record<string, unknown>): Article => {
+        const out = { ...item }
+        // Map publishedAt → published_at
+        if (!out.published_at && out.publishedAt) out.published_at = out.publishedAt
+        // Fix relative cover_image urls
+        if (out.cover_image && typeof out.cover_image === 'object') {
+          const img = out.cover_image as { url?: string }
+          if (img.url && !img.url.startsWith('http')) {
+            out.cover_image = { ...img, url: `${base}${img.url}` }
+          }
         }
-        return r
+        return out as unknown as Article
       }
-      const articles = (data?.data ?? []).map((a: { id: number; attributes?: Record<string, unknown> }) => flatten(a)) as Article[]
+      const articles = (data?.data ?? []).map((a: Record<string, unknown>) => normalise(a)) as Article[]
       const tot = data?.meta?.pagination?.total ?? 0
       if (append) {
         setDisplayed(prev => [...prev, ...articles])

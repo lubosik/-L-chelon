@@ -338,22 +338,9 @@ function SidebarNewsletter() {
       <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 10, color: '#888', lineHeight: 1.5, marginBottom: 14 }}>
         Twice monthly. Five pillars. No noise.
       </p>
-      <form onSubmit={(e) => e.preventDefault()}>
-        <input
-          type="email"
-          placeholder="Your email"
-          style={{
-            width: '100%', background: 'transparent', border: 'none',
-            borderBottom: '1px solid #ccc', color: '#111',
-            fontFamily: 'Lato, sans-serif', fontSize: 14,
-            padding: '8px 0', outline: 'none', borderRadius: 0, marginBottom: 10,
-            boxSizing: 'border-box',
-          }}
-        />
-        <Link href="/subscribe" className="btn-primary" style={{ display: 'block', textAlign: 'center', fontSize: 9, padding: '11px 0', letterSpacing: '0.16em', marginTop: 4 }}>
-          Subscribe
-        </Link>
-      </form>
+      <Link href="/subscribe" className="btn-primary" style={{ display: 'block', textAlign: 'center', fontSize: 9, padding: '11px 0', letterSpacing: '0.16em' }}>
+        Subscribe
+      </Link>
     </div>
   )
 }

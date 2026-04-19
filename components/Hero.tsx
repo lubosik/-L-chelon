@@ -27,7 +27,6 @@ const PLACEHOLDER: Article = {
 
 export default function Hero({ article }: { article: Article | null }) {
   const displayArticle = article ?? PLACEHOLDER
-  const isMobile = useRef(false)
   const hoverSlug = useHeroStore(s => s.hoverSlug)
 
   const slotsRef = useRef<[string, string]>(['la-mode', 'la-vitesse'])
@@ -42,10 +41,8 @@ export default function Hero({ article }: { article: Article | null }) {
   const vid1 = useRef<HTMLVideoElement>(null)
   const vidRefs = [vid0, vid1]
 
-  useEffect(() => { isMobile.current = window.innerWidth <= 768 }, [])
-
   const getSrc = useCallback((slug: string) =>
-    `/heroes/${slug}${isMobile.current ? '-mob' : ''}.mp4`
+    `/heroes/${slug}.mp4`
   , [])
 
   function setSlotsBoth(next: [string, string]) {
