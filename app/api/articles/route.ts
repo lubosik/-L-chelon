@@ -20,11 +20,18 @@ export async function GET(req: NextRequest) {
   if (STRAPI_TOKEN) headers['Authorization'] = `Bearer ${STRAPI_TOKEN}`
 
   try {
-    const res = await fetch(`${STRAPI_URL}/api/articles?${qs}`, { headers, next: { revalidate: 30 } })
-    if (!res.ok) return NextResponse.json({ data: [], meta: { pagination: { total: 0 } } }, { status: res.status })
+    const url = `${STRAPI_URL}/api/articles?${qs}`
+    console.log('[api/articles] fetching:', url, 'has_token:', !!STRAPI_TOKEN)
+    const res = await fetch(url, { headers, next: { revalidate: 30 } })
+    if (!res.ok) {
+      const body = await res.text()
+      console.error('[api/articles] strapi error', res.status, body)
+      return NextResponse.json({ data: [], meta: { pagination: { total: 0 } }, _error: `strapi ${res.status}` }, { status: 200 })
+    }
     const data = await res.json()
     return NextResponse.json(data)
-  } catch {
-    return NextResponse.json({ data: [], meta: { pagination: { total: 0 } } }, { status: 500 })
+  } catch (e) {
+    console.error('[api/articles] fetch failed:', e)
+    return NextResponse.json({ data: [], meta: { pagination: { total: 0 } }, _error: String(e) }, { status: 200 })
   }
 }
