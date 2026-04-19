@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { fetchArticleBySlug, fetchRecentArticles } from '@/lib/strapi'
-import PaywallGate from '@/components/PaywallGate'
-import ArticleCard from '@/components/ArticleCard'
+import { fetchArticleBySlug, fetchRelatedArticles, fetchRecentArticles } from '@/lib/strapi'
+import type { Article } from '@/lib/strapi'
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -23,11 +22,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+function formatDate(str?: string) {
+  if (!str) return ''
+  try { return new Date(str).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return '' }
+}
+
+function renderBody(body: unknown): React.ReactNode[] {
+  if (!Array.isArray(body)) return []
+  return body.map((block: { type: string; level?: number; children?: { text: string }[] }, i: number) => {
+    const text = block.children?.map((c) => c.text).join('') ?? ''
+    if (!text.trim()) return null
+    if (block.type === 'heading') {
+      if (block.level === 1) return <h1 key={i} style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(28px, 4vw, 44px)', color: '#111', lineHeight: 1.1, margin: '40px 0 16px' }}>{text}</h1>
+      if (block.level === 2) return <h2 key={i} style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(22px, 2.5vw, 28px)', color: '#111', lineHeight: 1.1, margin: '36px 0 14px' }}>{text}</h2>
+      if (block.level === 3) return <h3 key={i} style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 20, color: '#333', lineHeight: 1.15, margin: '28px 0 12px' }}>{text}</h3>
+    }
+    if (block.type === 'quote') {
+      return (
+        <blockquote key={i} style={{
+          fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300,
+          fontSize: 'clamp(20px, 2vw, 24px)', color: '#555', lineHeight: 1.45,
+          borderLeft: '3px solid #E2DED8', paddingLeft: 24, margin: '32px 0',
+        }}>{text}</blockquote>
+      )
+    }
+    return <p key={i} style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 17, color: '#444', lineHeight: 1.85, marginBottom: 22 }}>{text}</p>
+  }).filter(Boolean) as React.ReactNode[]
+}
+
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
   const article = await fetchArticleBySlug(slug)
-  const related = await fetchRecentArticles({ limit: 6 })
-  const relatedFiltered = related.filter((a) => a.slug !== slug).slice(0, 3)
 
   if (!article) {
     return (
@@ -37,7 +62,9 @@ export default async function ArticlePage({ params }: Props) {
     )
   }
 
-  const wordCount = article.excerpt ? Math.ceil(article.excerpt.split(' ').length * 10) : 800
+  const related = article.category?.slug
+    ? await fetchRelatedArticles(article.category.slug, slug)
+    : await fetchRecentArticles({ limit: 3 }).then(a => a.filter(r => r.slug !== slug).slice(0, 3))
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -46,122 +73,180 @@ export default async function ArticlePage({ params }: Props) {
     'description': article.excerpt,
     'image': article.cover_image?.url,
     'datePublished': article.published_at,
-    'dateModified': article.published_at,
     'author': { '@type': 'Person', 'name': article.author?.name },
-    'publisher': {
-      '@type': 'NewsMediaOrganization',
-      '@id': 'https://lechelon.com/#organization',
-      'name': "L'Échelon",
-      'logo': { '@type': 'ImageObject', 'url': 'https://lechelon.com/og/logo.png' },
-    },
+    'publisher': { '@type': 'NewsMediaOrganization', '@id': 'https://lechelon.com/#organization', 'name': "L'Échelon" },
     'mainEntityOfPage': { '@type': 'WebPage', '@id': `https://lechelon.com/article/${slug}` },
     'articleSection': article.category?.french_name,
-    'wordCount': wordCount,
     'isAccessibleForFree': !article.is_premium,
-    ...(article.is_premium ? {
-      'hasPart': { '@type': 'WebPageElement', 'isAccessibleForFree': false, 'cssSelector': '.article-body' },
-    } : {}),
   }
+
+  const bodyBlocks = renderBody(article.body)
+  const hasBody = bodyBlocks.length > 0
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* Dark article hero */}
-      <div style={{ position: 'relative', height: '70vh', minHeight: 400, background: '#0A0A0A', overflow: 'hidden' }}>
-        {article.cover_image && (
+      {/* ARTICLE HERO */}
+      <div style={{ position: 'relative', height: '65vh', minHeight: 420, background: '#0A0A0A', overflow: 'hidden' }} className="art-hero">
+        {article.cover_image ? (
           <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover', objectPosition: 'center' }} priority />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: '#1a1a1a' }} />
         )}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,0.55) 50%, transparent 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(8,8,8,1) 0%, rgba(8,8,8,0.5) 30%, rgba(8,8,8,0.15) 70%, transparent 100%)' }} />
+
         {/* Breadcrumb */}
-        <div style={{ position: 'absolute', top: 24, left: 56, zIndex: 20, display: 'flex', gap: 8, alignItems: 'center' }} className="breadcrumb-bar">
+        <div style={{ position: 'absolute', top: 24, left: 56, zIndex: 20, display: 'flex', gap: 8, alignItems: 'center' }} className="art-breadcrumb">
           <Link href="/" style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none' }}>Home</Link>
-          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10 }}>›</span>
+          <span style={{ color: 'rgba(255,255,255,0.25)' }}>›</span>
+          <Link href="/articles" style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none' }}>Articles</Link>
           {article.category && (
             <>
+              <span style={{ color: 'rgba(255,255,255,0.25)' }}>›</span>
               <Link href={`/category/${article.category.slug}`} style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.18em', textTransform: 'uppercase', textDecoration: 'none' }}>
                 {article.category.french_name}
               </Link>
-              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10 }}>›</span>
             </>
           )}
-          <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.60)', letterSpacing: '0.10em' }}>Article</span>
         </div>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 56px 48px', maxWidth: 860 }} className="art-hero-text">
+
+        {/* Hero text */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 56px 48px', maxWidth: 860, zIndex: 10 }} className="art-hero-text">
           {article.category && (
-            <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginBottom: 12 }}>
-              {article.category.french_name}
-            </div>
+            <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', marginBottom: 12 }}>
+              {article.category.french_name}{article.category.english_sub ? ` — ${article.category.english_sub}` : ''}
+            </p>
           )}
           <h1
-            style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(32px, 5vw, 64px)', color: '#fff', lineHeight: 1.05, marginBottom: 16 }}
+            style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(28px, 4vw, 60px)', color: '#fff', lineHeight: 0.95, marginBottom: 20, maxWidth: 720 }}
             dangerouslySetInnerHTML={{ __html: article.title }}
           />
-          <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.14em', textTransform: 'uppercase', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span>By <span style={{ color: 'rgba(255,255,255,0.75)' }}>{article.author?.name}</span></span>
-            <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span>{article.read_time ?? 5} min read</span>
-            <span style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-            <span style={{ color: article.is_premium ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.45)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em' }}>
+              {formatDate(article.published_at)}
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.20)' }}>·</span>
+            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em' }}>
+              By {article.author?.name ?? "L'Échelon"}
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.20)' }}>·</span>
+            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em' }}>
+              {article.read_time ?? 5} min read
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.20)' }}>·</span>
+            <span style={{
+              fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase',
+              ...(article.is_premium
+                ? { background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.80)', padding: '3px 8px' }
+                : { color: 'rgba(255,255,255,0.45)' }),
+            }}>
               {article.is_premium ? 'Members' : 'Free'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Article body */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 240px', background: '#ffffff', maxWidth: 1100, margin: '0 auto' }} className="art-layout">
-        <div className="article-body art-body-pad" style={{ padding: '64px 56px 80px' }}>
-          {article.category && (
-            <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#999', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 12 }}>
-              {article.category.french_name}
-            </p>
-          )}
-          <hr style={{ border: 'none', borderTop: '1px solid #E2DED8', marginBottom: 32 }} />
-          {article.is_premium ? (
-            <>
-              <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 16, color: '#444', lineHeight: 1.85, marginBottom: 32 }}>
-                {article.excerpt}
-              </p>
-              <PaywallGate locale="en" />
-            </>
-          ) : (
-            <div style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 16, color: '#444', lineHeight: 1.85 }}>
-              <p style={{ marginBottom: 24 }}>{article.excerpt}</p>
-              <p style={{ color: '#bbb', fontSize: 13 }}>
-                [Full article body renders from Strapi rich text blocks once connected.]
-              </p>
+      {/* ARTICLE LAYOUT: body + sidebar */}
+      <div style={{ background: '#ffffff' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 280px' }} className="art-layout">
+
+          {/* BODY */}
+          <div className="art-body-col" style={{ padding: '56px 56px 80px 56px', borderRight: '1px solid #E2DED8' }}>
+            {/* Kicker */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+              {article.category && (
+                <Link href={`/category/${article.category.slug}`} style={{
+                  fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#999', letterSpacing: '0.22em',
+                  textTransform: 'uppercase', textDecoration: 'none', transition: 'color 0.2s',
+                }}>
+                  {article.category.french_name}
+                </Link>
+              )}
             </div>
-          )}
-        </div>
-        {relatedFiltered.length > 0 && (
-          <div style={{ borderLeft: '1px solid #E2DED8', padding: '64px 24px 0', position: 'sticky', top: 56, alignSelf: 'start' }}>
-            <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#555', letterSpacing: '0.22em', textTransform: 'uppercase', borderBottom: '1px solid #E2DED8', paddingBottom: 10, marginBottom: 20 }}>
-              Most popular
+            <hr style={{ border: 'none', borderTop: '1px solid #E2DED8', marginBottom: 40 }} />
+
+            {/* Article body */}
+            <div className="article-body">
+              {article.is_premium ? (
+                <>
+                  {/* Show excerpt as teaser, then gate */}
+                  {article.excerpt && (
+                    <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 400, fontSize: 18, color: '#222', lineHeight: 1.80, marginBottom: 24 }}>
+                      {article.excerpt}
+                    </p>
+                  )}
+                  {hasBody && (
+                    <div style={{ position: 'relative' }}>
+                      <div style={{ maxHeight: 260, overflow: 'hidden' }}>
+                        {bodyBlocks.slice(0, 3)}
+                      </div>
+                      <div style={{ height: 200, marginTop: -200, position: 'relative', background: 'linear-gradient(to bottom, transparent 0%, #ffffff 80%)', zIndex: 1 }} />
+                    </div>
+                  )}
+                  <PaywallSection />
+                </>
+              ) : (
+                <>
+                  {article.excerpt && (
+                    <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 400, fontSize: 18, color: '#222', lineHeight: 1.80, marginBottom: 28 }}>
+                      {article.excerpt}
+                    </p>
+                  )}
+                  {hasBody ? bodyBlocks : (
+                    <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 16, color: '#bbb', lineHeight: 1.8 }}>
+                      Full article body will appear here once Nani publishes the content in Strapi.
+                    </p>
+                  )}
+                </>
+              )}
             </div>
-            {relatedFiltered.map((a) => (
-              <Link key={a.id} href={`/article/${a.slug}`} style={{ display: 'block', marginBottom: 20, textDecoration: 'none' }}>
-                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#666', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 4 }}>
-                  {a.category?.french_name}
-                </div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 13, color: '#333', lineHeight: 1.3 }}>
-                  {a.title}
-                </div>
-              </Link>
-            ))}
+
+            {/* End divider + author credit */}
+            {!article.is_premium && (
+              <div style={{ marginTop: 48 }}>
+                <div style={{ width: 40, height: 1, background: '#E2DED8', margin: '0 auto 32px' }} />
+                <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>
+                  Written by {article.author?.name ?? "L'Échelon"}
+                </p>
+                {article.published_at && (
+                  <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center' }}>
+                    Published {formatDate(article.published_at)}{article.category ? ` in ${article.category.french_name}` : ''}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* SIDEBAR — desktop only */}
+          <div className="art-sidebar" style={{ padding: '56px 0 0 40px', position: 'sticky', top: 80, alignSelf: 'start', height: 'fit-content' }}>
+            {related.length > 0 && (
+              <>
+                <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 16 }}>
+                  More from {article.category?.french_name ?? "L'Échelon"}
+                </p>
+                {related.map((a) => (
+                  <SidebarCard key={a.id} article={a} />
+                ))}
+              </>
+            )}
+            {/* Sidebar newsletter */}
+            <SidebarNewsletter />
+          </div>
+
+        </div>
       </div>
 
-      {/* Related articles */}
-      {relatedFiltered.length > 0 && (
-        <div style={{ background: '#F8F7F5', padding: '48px 56px', borderTop: '1px solid #E2DED8' }} className="related-pad">
-          <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#999', marginBottom: 28 }}>
-            Continue reading
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0 }} className="related-grid">
-            {relatedFiltered.map((a) => (
-              <ArticleCard key={a.id} article={a} locale="en" />
+      {/* MOBILE RELATED ARTICLES */}
+      {related.length > 0 && (
+        <div style={{ background: '#F8F7F5', padding: '40px 24px' }} className="mobile-related">
+          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 24, color: '#111', marginBottom: 12 }}>
+            More stories
+          </h2>
+          <div style={{ height: 1, background: '#E2DED8', marginBottom: 24 }} />
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', marginLeft: -24, paddingLeft: 24, paddingRight: 24 } as React.CSSProperties}>
+            {related.map((a) => (
+              <MobileRelatedCard key={a.id} article={a} />
             ))}
           </div>
         </div>
@@ -169,14 +254,130 @@ export default async function ArticlePage({ params }: Props) {
 
       <style>{`
         @media (max-width: 768px) {
-          .breadcrumb-bar { left: 20px !important; top: 16px !important; }
-          .art-hero-text { padding: 0 20px 32px !important; }
+          .art-hero { height: 50svh !important; min-height: 320px !important; }
+          .art-breadcrumb { left: 20px !important; top: 16px !important; }
+          .art-hero-text { padding: 0 24px 32px !important; max-width: 100% !important; }
+          .art-hero-text h1 { font-size: clamp(24px, 7vw, 44px) !important; }
           .art-layout { grid-template-columns: 1fr !important; }
-          .art-body-pad { padding: 40px 20px 60px !important; }
-          .related-pad { padding: 32px 20px !important; }
-          .related-grid { grid-template-columns: 1fr !important; }
+          .art-body-col { padding: 32px 24px 64px !important; border-right: none !important; }
+          .art-sidebar { display: none !important; }
+          .article-body p { font-size: 16px !important; }
+          .mobile-related { display: block !important; }
         }
+        @media (min-width: 769px) {
+          .mobile-related { display: none !important; }
+        }
+        .mobile-related::-webkit-scrollbar { display: none; }
       `}</style>
     </>
+  )
+}
+
+function PaywallSection() {
+  return (
+    <div style={{ paddingTop: 40, borderTop: '1px solid #E2DED8', textAlign: 'center' }}>
+      {/* É crest */}
+      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: '50%', border: '1px solid #111', marginBottom: 20 }}>
+        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: '#111', lineHeight: 1 }}>L</span>
+      </div>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 28, color: '#111', marginBottom: 16 }}>
+        Continue reading with L&apos;Échelon
+      </h2>
+      <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 13, color: '#666', lineHeight: 1.65, maxWidth: 360, margin: '0 auto 28px' }}>
+        This story is available to members. Join L&apos;Échelon for full access to all articles, the L&apos;Échelon Index, and intelligence across the five pillars of luxury.
+      </p>
+      <Link href="/subscribe" className="btn-primary paywall-btn" style={{ fontSize: 9, padding: '14px 32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        Become a member
+      </Link>
+      <div style={{ marginTop: 16 }}>
+        <Link href="/sign-in" style={{
+          fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: '#555',
+          borderBottom: '1px solid #ccc', paddingBottom: 2, textDecoration: 'none',
+        }}>
+          Sign in →
+        </Link>
+      </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .paywall-btn { width: 100% !important; min-height: 48px !important; }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+function SidebarCard({ article }: { article: Article }) {
+  const date = article.published_at
+    ? new Date(article.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : ''
+  return (
+    <Link href={`/article/${article.slug}`} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid #F0EDE8', paddingBottom: 16, marginBottom: 16 }}>
+      {article.cover_image && (
+        <div style={{ position: 'relative', width: '100%', height: 140, background: '#E8E5E0', overflow: 'hidden', marginBottom: 8 }}>
+          <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="240px" />
+        </div>
+      )}
+      <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#aaa', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '8px 0 4px' }}>
+        {article.category?.french_name}
+      </p>
+      <p className="sidebar-title" style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, color: '#333', lineHeight: 1.25, transition: 'color 0.2s' }}>
+        {article.title}
+      </p>
+      {date && <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#bbb', marginTop: 4 }}>{date}</p>}
+      <style>{`.sidebar-title:hover { color: #111 !important; }`}</style>
+    </Link>
+  )
+}
+
+function SidebarNewsletter() {
+  return (
+    <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid #E2DED8' }}>
+      <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 18, color: '#111', marginBottom: 8 }}>
+        Join L&apos;Échelon
+      </p>
+      <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 10, color: '#888', lineHeight: 1.5, marginBottom: 14 }}>
+        Twice monthly. Five pillars. No noise.
+      </p>
+      <form onSubmit={(e) => e.preventDefault()}>
+        <input
+          type="email"
+          placeholder="Your email"
+          style={{
+            width: '100%', background: 'transparent', border: 'none',
+            borderBottom: '1px solid #ccc', color: '#111',
+            fontFamily: 'Lato, sans-serif', fontSize: 14,
+            padding: '8px 0', outline: 'none', borderRadius: 0, marginBottom: 10,
+            boxSizing: 'border-box',
+          }}
+        />
+        <Link href="/subscribe" className="btn-primary" style={{ display: 'block', textAlign: 'center', fontSize: 9, padding: '11px 0', letterSpacing: '0.16em', marginTop: 4 }}>
+          Subscribe
+        </Link>
+      </form>
+    </div>
+  )
+}
+
+function MobileRelatedCard({ article }: { article: Article }) {
+  const date = article.published_at
+    ? new Date(article.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : ''
+  return (
+    <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', display: 'block', minWidth: '72vw', scrollSnapAlign: 'start', flexShrink: 0 }}>
+      <div style={{ position: 'relative', width: '100%', height: '50vw', background: '#E8E5E0', overflow: 'hidden' }}>
+        {article.cover_image && (
+          <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="72vw" />
+        )}
+      </div>
+      <div style={{ paddingTop: 12 }}>
+        <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>
+          {article.category?.french_name}
+        </p>
+        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 18, color: '#111', lineHeight: 1.15, marginBottom: 4 }}>
+          {article.title}
+        </p>
+        {date && <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#bbb' }}>{date}</p>}
+      </div>
+    </Link>
   )
 }

@@ -291,6 +291,22 @@ export default function Nav() {
           <div style={{ height: 1, background: '#E2DED8', margin: '8px 0' }} />
 
           <Link
+            href="/articles"
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              height: 56, padding: '0 24px',
+              fontFamily: 'Lato, sans-serif', fontSize: 11, letterSpacing: '0.18em',
+              textTransform: 'uppercase', color: '#555',
+              borderBottom: '1px solid #F0EDE8',
+              textDecoration: 'none',
+            }}
+          >
+            <span>Articles</span>
+            <span style={{ color: '#bbb', fontFamily: 'sans-serif' }}>→</span>
+          </Link>
+
+          <Link
             href="/about"
             onClick={() => setDrawerOpen(false)}
             style={{

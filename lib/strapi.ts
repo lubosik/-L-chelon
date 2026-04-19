@@ -47,12 +47,6 @@ export interface Category {
   grid_image_alt?: string
 }
 
-export function getStrapiImageUrl(url: string): string {
-  if (!url) return ''
-  if (url.startsWith('http')) return url
-  return `${STRAPI_URL}${url}`
-}
-
 export interface Issue {
   id: number
   issue_number: number
@@ -94,6 +88,12 @@ export interface TickerItem {
   active: boolean
 }
 
+export function getStrapiImageUrl(url: string): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${STRAPI_URL}${url}`
+}
+
 function flattenStrapiData<T>(data: unknown): T | null {
   if (!data) return null
   const d = data as { id?: number; attributes?: Record<string, unknown> }
@@ -129,24 +129,43 @@ function flattenList<T>(res: { data?: unknown[] } | null): T[] {
   return res.data.map((item) => flattenStrapiData<T>(item)).filter(Boolean) as T[]
 }
 
+// ── ARTICLES ──────────────────────────────────────────────────────────────────
+
 export async function fetchArticles(params: {
   limit?: number
+  start?: number
   featured?: boolean
   category?: string
   premium?: boolean
 } = {}): Promise<Article[]> {
   const qs = new URLSearchParams()
   qs.set('populate', 'cover_image,category,author,issue')
-  qs.set('sort', 'published_at:desc')
-  if (params.limit) qs.set('pagination[limit]', String(params.limit))
-  if (params.featured !== undefined) {
-    qs.set('filters[featured][$eq]', String(params.featured))
-  }
-  if (params.category) {
-    qs.set('filters[category][slug][$eq]', params.category)
-  }
+  qs.set('sort', 'publishedAt:desc')
+  qs.set('pagination[limit]', String(params.limit ?? 10))
+  if (params.start) qs.set('pagination[start]', String(params.start))
+  if (params.featured !== undefined) qs.set('filters[featured][$eq]', String(params.featured))
+  if (params.category) qs.set('filters[category][slug][$eq]', params.category)
   const data = await strapiGet(`/articles?${qs}`)
   return flattenList<Article>(data)
+}
+
+export async function fetchArticlesWithTotal(params: {
+  limit?: number
+  start?: number
+  category?: string
+} = {}): Promise<{ articles: Article[]; total: number }> {
+  const qs = new URLSearchParams()
+  qs.set('populate', 'cover_image,category,author,issue')
+  qs.set('sort', 'publishedAt:desc')
+  qs.set('pagination[limit]', String(params.limit ?? 10))
+  qs.set('pagination[start]', String(params.start ?? 0))
+  if (params.category) qs.set('filters[category][slug][$eq]', params.category)
+  const data = await strapiGet(`/articles?${qs}`)
+  if (!data) return { articles: [], total: 0 }
+  return {
+    articles: flattenList<Article>(data),
+    total: (data as { meta?: { pagination?: { total?: number } } }).meta?.pagination?.total ?? 0,
+  }
 }
 
 export async function fetchFeaturedArticle(): Promise<Article | null> {
@@ -162,9 +181,19 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
   return list[0] ?? null
 }
 
+export async function fetchRelatedArticles(categorySlug: string, excludeSlug: string): Promise<Article[]> {
+  const data = await strapiGet(
+    `/articles?filters[category][slug][$eq]=${categorySlug}&filters[slug][$ne]=${excludeSlug}&populate=cover_image,category,author&sort=publishedAt:desc&pagination[limit]=3`,
+    300
+  )
+  return flattenList<Article>(data)
+}
+
 export async function fetchRecentArticles(params: { limit?: number } = {}): Promise<Article[]> {
   return fetchArticles({ limit: params.limit ?? 10 })
 }
+
+// ── CATEGORIES ────────────────────────────────────────────────────────────────
 
 export async function fetchCategories(): Promise<Category[]> {
   const data = await strapiGet('/categories?populate=*&sort=name:asc')
@@ -176,6 +205,8 @@ export async function fetchCategoryBySlug(slug: string): Promise<Category | null
   const list = flattenList<Category>(data)
   return list[0] ?? null
 }
+
+// ── OTHER ─────────────────────────────────────────────────────────────────────
 
 export async function fetchIndexData(): Promise<IndexDataPoint[]> {
   const data = await strapiGet('/index-data-points?sort=id:asc&pagination[limit]=6')

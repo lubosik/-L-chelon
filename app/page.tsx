@@ -245,14 +245,15 @@ export default function HomePage() {
           </div>
           <div style={{ height: 1, background: '#E2DED8', margin: '48px 0 32px' }} />
           <div style={{ textAlign: 'center' }}>
-            <Link href="/category/la-mode" style={{
+            <Link href="/articles" style={{
               fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: '#444',
               borderBottom: '1px solid #ccc', paddingBottom: 3, textDecoration: 'none', transition: 'color 0.2s, border-color 0.2s',
+              display: 'inline-flex', alignItems: 'flex-end', minHeight: 48,
             }}
               onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#111'; el.style.borderBottomColor = '#111' }}
               onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#444'; el.style.borderBottomColor = '#ccc' }}
             >
-              View all articles
+              View all articles →
             </Link>
           </div>
         </div>
