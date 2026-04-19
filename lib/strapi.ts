@@ -62,6 +62,7 @@ export interface Article {
   excerpt?: string
   body?: unknown
   cover_image?: StrapiImage
+  cover_image_credit?: string
   category?: Category
   author?: Author
   issue?: Issue
