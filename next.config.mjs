@@ -8,6 +8,8 @@ const nextConfig = {
       { protocol: 'http', hostname: 'localhost', port: '1337', pathname: '/uploads/**' },
       { protocol: 'https', hostname: 'cms.lechelon.com', pathname: '/uploads/**' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: '*.up.railway.app', pathname: '/uploads/**' },
+      { protocol: 'https', hostname: '*.railway.app', pathname: '/uploads/**' },
     ],
   },
   compress: true,

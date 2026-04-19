@@ -32,21 +32,21 @@ export default function ArticlesPage() {
   const LIMIT = 10
 
   async function load(category: string, offset: number, append = false) {
-    const base = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
-    const catFilter = category ? `&filters[category][slug][$eq]=${encodeURIComponent(category)}` : ''
-    const url = `${base}/api/articles?populate=*&sort=publishedAt:desc&pagination[limit]=${LIMIT}&pagination[start]=${offset}${catFilter}`
+    const qs = new URLSearchParams()
+    qs.set('limit', String(LIMIT))
+    qs.set('start', String(offset))
+    if (category) qs.set('category', category)
     try {
-      const res = await fetch(url)
+      const res = await fetch(`/api/articles?${qs}`)
       const data = await res.json()
+      const strapiBase = process.env.NEXT_PUBLIC_STRAPI_URL || ''
       const normalise = (item: Record<string, unknown>): Article => {
         const out = { ...item }
-        // Map publishedAt → published_at
         if (!out.published_at && out.publishedAt) out.published_at = out.publishedAt
-        // Fix relative cover_image urls
         if (out.cover_image && typeof out.cover_image === 'object') {
           const img = out.cover_image as { url?: string }
-          if (img.url && !img.url.startsWith('http')) {
-            out.cover_image = { ...img, url: `${base}${img.url}` }
+          if (img.url && !img.url.startsWith('http') && strapiBase) {
+            out.cover_image = { ...img, url: `${strapiBase}${img.url}` }
           }
         }
         return out as unknown as Article
