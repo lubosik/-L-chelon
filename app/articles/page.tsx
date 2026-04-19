@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Article } from '@/lib/strapi'
+import { getCoverImage } from '@/lib/categoryImages'
 
 const CATEGORIES = [
   { label: 'ALL', slug: '' },
@@ -150,13 +151,11 @@ export default function ArticlesPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '55% 45%', gap: 0 }} className="featured-art-grid">
                   {/* Image */}
                   <div className="featured-art-img" style={{ position: 'relative', height: 480, background: '#E8E5E0', overflow: 'hidden' }}>
-                    {featured.cover_image ? (
-                      <Image src={featured.cover_image.url} alt={featured.title} fill style={{ objectFit: 'cover' }} priority sizes="(max-width:768px) 100vw, 55vw" />
+                    {(() => { const src = getCoverImage(featured); return src ? (
+                      <Image src={src} alt={featured.title} fill style={{ objectFit: 'cover' }} priority sizes="(max-width:768px) 100vw, 55vw" />
                     ) : (
-                      <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#ccc', letterSpacing: '0.18em', textTransform: 'uppercase' }}>Cover photo</span>
-                      </div>
-                    )}
+                      <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0' }} />
+                    ); })()}
                   </div>
                   {/* Text */}
                   <div className="featured-art-body" style={{ padding: 48, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -293,11 +292,11 @@ function ArticleListItem({ article }: { article: Article }) {
       >
         {/* Thumbnail */}
         <div className="art-list-thumb" style={{ position: 'relative', width: 280, height: 190, flexShrink: 0, background: '#E8E5E0', overflow: 'hidden' }}>
-          {article.cover_image ? (
-            <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 120px, 280px" />
+          {(() => { const src = getCoverImage(article); return src ? (
+            <Image src={src} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 120px, 280px" />
           ) : (
             <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0' }} />
-          )}
+          ); })()}
         </div>
         {/* Details */}
         <div className="art-list-body" style={{ paddingLeft: 28, flex: 1 }}>

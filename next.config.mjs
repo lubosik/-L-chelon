@@ -7,6 +7,7 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'http', hostname: 'localhost', port: '1337', pathname: '/uploads/**' },
       { protocol: 'https', hostname: 'cms.lechelon.com', pathname: '/uploads/**' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
   compress: true,

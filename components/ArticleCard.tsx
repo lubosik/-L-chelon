@@ -1,17 +1,19 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import type { Article } from '@/lib/strapi'
+import { getCoverImage } from '@/lib/categoryImages'
 
 export default function ArticleCard({ article, locale = 'en' }: { article: Article; locale?: string }) {
   const prefix = locale === 'en' ? '' : `/${locale}`
   const href = `${prefix}/article/${article.slug}`
+  const coverSrc = getCoverImage(article)
 
   return (
     <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
       <article style={{ background: 'var(--white)', cursor: 'pointer', overflow: 'hidden' }}>
         <div style={{ position: 'relative', height: 200, background: '#C8C4BE', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {article.cover_image ? (
-            <Image src={article.cover_image.url} alt={article.cover_image.alternativeText || article.title} fill style={{ objectFit: 'cover' }} />
+          {coverSrc ? (
+            <Image src={coverSrc} alt={article.cover_image?.alternativeText || article.title} fill style={{ objectFit: 'cover' }} />
           ) : (
             <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, letterSpacing: '0.20em', textTransform: 'uppercase', color: '#888' }}>
               Cover photo

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Article } from '@/lib/strapi'
 import Sidebar from './Sidebar'
+import { getCoverImage } from '@/lib/categoryImages'
 
 interface ArticleGridProps {
   articles: Article[]
@@ -49,6 +50,7 @@ export default function ArticleGrid({ articles, featuredArticle, locale = 'en' }
 
 function ArticleItem({ article, prefix }: { article: Article; prefix: string }) {
   const href = `${prefix}/article/${article.slug}`
+  const coverSrc = getCoverImage(article)
 
   return (
     <article style={{
@@ -62,9 +64,9 @@ function ArticleItem({ article, prefix }: { article: Article; prefix: string }) 
       {/* Image */}
       <Link href={href} style={{ display: 'block', flexShrink: 0 }}>
         <div style={{ width: '100%', height: 280, background: 'var(--img-placeholder)', overflow: 'hidden', position: 'relative' }}>
-          {article.cover_image ? (
-            <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} />
-          ) : null}
+          {coverSrc && (
+            <Image src={coverSrc} alt={article.title} fill style={{ objectFit: 'cover' }} />
+          )}
         </div>
       </Link>
 

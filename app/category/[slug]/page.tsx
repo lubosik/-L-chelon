@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { fetchCategoryBySlug, fetchArticles } from '@/lib/strapi'
 import type { Category, Article } from '@/lib/strapi'
 import CategoryVideoLoop from '@/components/CategoryVideoLoop'
+import { getCoverImage } from '@/lib/categoryImages'
 
 const FALLBACK_CATEGORIES: Record<string, Category & { tagline: string; intro: string }> = {
   'la-mode': {
@@ -123,11 +124,11 @@ export default async function CategoryPage({ params }: Props) {
           {featuredArticle ? (
             <div style={{ display: 'grid', gridTemplateColumns: '58% 42%', gap: 0 }} className="cat-featured-grid">
               <div className="cat-featured-img" style={{ position: 'relative', height: 520, background: '#E8E5E0', overflow: 'hidden' }}>
-                {featuredArticle.cover_image ? (
-                  <Image src={featuredArticle.cover_image.url} alt={featuredArticle.title} fill style={{ objectFit: 'cover' }} priority />
+                {(() => { const src = getCoverImage(featuredArticle); return src ? (
+                  <Image src={src} alt={featuredArticle.title} fill style={{ objectFit: 'cover' }} priority />
                 ) : (
                   <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0' }} />
-                )}
+                ); })()}
               </div>
               <div className="cat-featured-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 56 }}>
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 16 }}>
@@ -175,9 +176,9 @@ export default async function CategoryPage({ params }: Props) {
               <div key={article.id} style={{ background: '#fff' }}>
                 <Link href={`/article/${article.slug}`} style={{ display: 'block', textDecoration: 'none' }}>
                   <div style={{ position: 'relative', width: '100%', height: 220, background: '#E8E5E0', overflow: 'hidden' }}>
-                    {article.cover_image && (
-                      <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 33vw" />
-                    )}
+                    {(() => { const src = getCoverImage(article); return src ? (
+                      <Image src={src} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 33vw" />
+                    ) : null; })()}
                   </div>
                   <div style={{ padding: '20px 0 0' }}>
                     <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
@@ -258,9 +259,9 @@ function AlternatingArticle({ article, reverse }: { article: Article; reverse: b
       direction: reverse ? 'rtl' : 'ltr',
     }} className="alt-article">
       <div className="alt-article-img" style={{ position: 'relative', height: 380, background: '#E8E5E0', overflow: 'hidden', direction: 'ltr' }}>
-        {article.cover_image && (
-          <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 50vw" />
-        )}
+        {(() => { const src = getCoverImage(article); return src ? (
+          <Image src={src} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 50vw" />
+        ) : null; })()}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', direction: 'ltr' }}>
         <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14 }}>
