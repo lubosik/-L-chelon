@@ -63,13 +63,12 @@ export default function HomePage() {
   const indexRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'
     async function load() {
       try {
         const [catRes, tickerRes, indexRes, articlesRes] = await Promise.all([
-          fetch(`${base}/api/categories?populate=*&sort=name:asc`).then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
-          fetch(`${base}/api/ticker-items?filters[active][$eq]=true`).then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
-          fetch(`${base}/api/index-data-points?sort=id:asc&pagination[limit]=6`).then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/categories').then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/ticker').then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
+          fetch('/api/index-data').then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
           fetch('/api/articles?limit=10&start=0').then((r) => r.ok ? r.json() : { data: [] }).catch(() => ({ data: [] })),
         ])
         const flatten = (item: { id: number; attributes?: Record<string, unknown> }) => {
