@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Article, Category, IndexDataPoint, TickerItem } from '@/lib/strapi'
 import { getStrapiImageUrl } from '@/lib/strapi'
+import { getCoverImage } from '@/lib/categoryImages'
 import Ticker from '@/components/Ticker'
 import Hero from '@/components/Hero'
 
@@ -69,7 +70,7 @@ export default function HomePage() {
           fetch(`${base}/api/categories?populate[grid_image][fields][0]=url&populate[grid_image][fields][1]=alternativeText&populate[grid_image][fields][2]=width&populate[grid_image][fields][3]=height&sort=name:asc`).then((r) => r.json()).catch(() => ({ data: [] })),
           fetch(`${base}/api/ticker-items?filters[active][$eq]=true`).then((r) => r.json()).catch(() => ({ data: [] })),
           fetch(`${base}/api/index-data-points?sort=id:asc&pagination[limit]=6`).then((r) => r.json()).catch(() => ({ data: [] })),
-          fetch(`${base}/api/articles?populate=cover_image,category,author,issue&sort=published_at:desc&pagination[limit]=10`).then((r) => r.json()).catch(() => ({ data: [] })),
+          fetch(`${base}/api/articles?populate=cover_image,category,author,issue&sort=publishedAt:desc&pagination[limit]=10`).then((r) => r.json()).catch(() => ({ data: [] })),
         ])
         const flatten = (item: { id: number; attributes?: Record<string, unknown> }) => {
           if (!item.attributes) return item
@@ -188,11 +189,7 @@ export default function HomePage() {
           {featuredArticle ? (
             <div style={{ display: 'grid', gridTemplateColumns: '58% 42%', gap: 0 }} className="featured-grid">
               <div className="featured-img-wrap" style={{ position: 'relative', height: 560, background: '#E8E5E0', overflow: 'hidden' }}>
-                {featuredArticle.cover_image ? (
-                  <Image src={featuredArticle.cover_image.url} alt={featuredArticle.title} fill style={{ objectFit: 'cover' }} priority />
-                ) : (
-                  <div style={{ position: 'absolute', inset: 0, background: '#E8E5E0' }} />
-                )}
+                <Image src={getCoverImage(featuredArticle) ?? '/heroes/la-mode-grid.jpg'} alt={featuredArticle.title} fill style={{ objectFit: 'cover' }} priority />
               </div>
               <div className="featured-body" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingLeft: 56 }}>
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.24em', textTransform: 'uppercase', marginBottom: 16 }}>
@@ -550,9 +547,7 @@ function ArticleCardHP({ article }: { article: Article | null }) {
     <div className="article-card-hp" style={{ background: '#fff' }}>
       <Link href={`/article/${article.slug}`} style={{ display: 'contents', textDecoration: 'none' }}>
         <div className="article-card-hp-img" style={{ position: 'relative', width: '100%', height: 220, background: '#E8E5E0', overflow: 'hidden', flexShrink: 0 }}>
-          {article.cover_image && (
-            <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 120px, 33vw" />
-          )}
+          <Image src={getCoverImage(article) ?? '/heroes/la-mode-grid.jpg'} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 120px, 33vw" />
         </div>
         <div className="article-card-hp-body" style={{ padding: '20px 0 0' }}>
           <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
