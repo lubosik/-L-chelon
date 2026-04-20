@@ -29,21 +29,33 @@ function normalise(item: Record<string, unknown>): Article {
   return out as unknown as Article
 }
 
+async function apiFetch(qs: URLSearchParams): Promise<Article[]> {
+  try {
+    const res = await fetch(`/api/articles?${qs}`)
+    if (!res.ok) return []
+    const data = await res.json()
+    return ((data?.data ?? []) as Record<string, unknown>[]).map(normalise)
+  } catch { return [] }
+}
+
 async function fetchNext(seenSlugs: string[], categorySlug?: string): Promise<Article | null> {
-  const tryFetch = async (qs: URLSearchParams): Promise<Article | null> => {
-    try {
-      const res = await fetch(`/api/articles?${qs}`)
-      if (!res.ok) return null
-      const data = await res.json()
-      const articles = ((data?.data ?? []) as Record<string, unknown>[]).map(normalise)
-      return articles.find(a => !seenSlugs.includes(a.slug)) ?? null
-    } catch { return null }
-  }
   if (categorySlug) {
-    const found = await tryFetch(new URLSearchParams({ limit: '10', category: categorySlug }))
+    const articles = await apiFetch(new URLSearchParams({ limit: '10', category: categorySlug }))
+    const found = articles.find(a => !seenSlugs.includes(a.slug))
     if (found) return found
   }
-  return tryFetch(new URLSearchParams({ limit: '20' }))
+  const articles = await apiFetch(new URLSearchParams({ limit: '20' }))
+  return articles.find(a => !seenSlugs.includes(a.slug)) ?? null
+}
+
+async function fetchSidebar(excludeSlugs: string[]): Promise<Article[]> {
+  const articles = await apiFetch(new URLSearchParams({ limit: '20' }))
+  return articles.filter(a => !excludeSlugs.includes(a.slug)).slice(0, 5)
+}
+
+async function fetchRelated(categorySlug: string, excludeSlugs: string[]): Promise<Article[]> {
+  const articles = await apiFetch(new URLSearchParams({ limit: '10', category: categorySlug }))
+  return articles.filter(a => !excludeSlugs.includes(a.slug)).slice(0, 5)
 }
 
 function formatDate(str?: string) {
@@ -51,10 +63,63 @@ function formatDate(str?: string) {
   try { return new Date(str).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return '' }
 }
 
+function SidebarCard({ article }: { article: Article }) {
+  const imgSrc = getCoverImage(article)
+  return (
+    <Link href={`/article/${article.slug}`} style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #F5F3F0', marginBottom: 16, textDecoration: 'none' }}>
+      <div style={{ width: 72, height: 60, flexShrink: 0, background: '#E8E5E0', overflow: 'hidden', position: 'relative' }}>
+        {imgSrc && <Image src={imgSrc} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="72px" />}
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        {article.category && (
+          <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, color: '#bbb', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 3 }}>
+            {article.category.french_name}
+          </p>
+        )}
+        <p style={{
+          fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 13, color: '#333', lineHeight: 1.25,
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+        } as React.CSSProperties}>
+          {clean(article.title)}
+        </p>
+        {article.published_at && (
+          <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, color: '#bbb', marginTop: 4 }}>
+            {formatDate(article.published_at)}
+          </p>
+        )}
+      </div>
+    </Link>
+  )
+}
+
+function RelatedCard({ article }: { article: Article }) {
+  const imgSrc = getCoverImage(article)
+  return (
+    <Link href={`/article/${article.slug}`} style={{ minWidth: 240, maxWidth: 240, flexShrink: 0, scrollSnapAlign: 'start', textDecoration: 'none', display: 'block' }} className="nxt-related-card-width">
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '3/2', background: '#E8E5E0', overflow: 'hidden', marginBottom: 14 }}>
+        {imgSrc && <Image src={imgSrc} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 70vw, 240px" />}
+      </div>
+      {article.category && (
+        <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.20em', textTransform: 'uppercase', marginBottom: 6 }}>
+          {article.category.french_name}
+        </p>
+      )}
+      <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 16, color: '#111', lineHeight: 1.2, textTransform: 'uppercase', marginBottom: 6 }}>
+        {clean(article.title)}
+      </h3>
+      {article.read_time && (
+        <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#bbb' }}>{article.read_time} min read</p>
+      )}
+    </Link>
+  )
+}
+
 export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryName, showNewsletter = true }: Props) {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(false)
   const [triggered, setTriggered] = useState(false)
+  const [sidebarArticles, setSidebarArticles] = useState<Article[]>([])
+  const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
   const sentinelRef = useRef<HTMLDivElement>(null)
   const articleRef = useRef<HTMLDivElement>(null)
 
@@ -75,6 +140,16 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
     return () => obs.disconnect()
   }, [triggered, seenSlugs, categorySlug])
 
+  // Fetch sidebar + related once article is known
+  useEffect(() => {
+    if (!article) return
+    const allSeen = [...seenSlugs, article.slug]
+    fetchSidebar(allSeen).then(setSidebarArticles)
+    if (article.category?.slug) {
+      fetchRelated(article.category.slug, allSeen).then(setRelatedArticles)
+    }
+  }, [article]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!article) return
     const el = articleRef.current
@@ -93,6 +168,9 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
   const bodyBlocks = article ? renderBody(article.body, STRAPI_BASE) : []
   const nextSeenSlugs = article ? [...seenSlugs, article.slug] : seenSlugs
 
+  // Detect category change
+  const isCategoryChange = article && article.category?.slug && article.category.slug !== categorySlug
+
   return (
     <div>
       <div ref={sentinelRef} style={{ height: 1 }} />
@@ -105,14 +183,29 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
 
       {article && (
         <div ref={articleRef}>
-          {/* Section separator */}
-          <div style={{ background: '#F8F7F5', padding: '24px 56px', display: 'flex', alignItems: 'center', gap: 16 }} className="next-sep-pad">
-            <div style={{ flex: 1, height: 1, background: '#E2DED8' }} />
-            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: '#aaa', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
-              Next from {article.category?.french_name ?? categoryName ?? "L'Échelon"}
-            </span>
-            <div style={{ flex: 1, height: 1, background: '#E2DED8' }} />
-          </div>
+          {/* Section separator — prominent if new category, subtle if same */}
+          {isCategoryChange ? (
+            <div style={{ background: '#0A0A0A', padding: '28px 56px', display: 'flex', alignItems: 'center', gap: 20 }} className="next-sep-pad">
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.15)' }} />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, color: 'rgba(255,255,255,0.40)', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 6 }}>
+                  Now entering
+                </p>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 22, color: '#fff', letterSpacing: '0.08em', margin: 0 }}>
+                  {article.category?.french_name}
+                </p>
+              </div>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+          ) : (
+            <div style={{ background: '#F8F7F5', padding: '24px 56px', display: 'flex', alignItems: 'center', gap: 16 }} className="next-sep-pad">
+              <div style={{ flex: 1, height: 1, background: '#E2DED8' }} />
+              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: '#aaa', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                Next from {article.category?.french_name ?? categoryName ?? "L'Échelon"}
+              </span>
+              <div style={{ flex: 1, height: 1, background: '#E2DED8' }} />
+            </div>
+          )}
 
           {/* Mini-hero */}
           <div style={{ position: 'relative', overflow: 'hidden', background: '#0A0A0A' }} className="next-art-hero">
@@ -197,8 +290,29 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
                   </div>
                 )}
               </div>
-              {/* Empty sidebar space to keep body column width consistent on desktop */}
-              <div style={{ width: 280, flexShrink: 0 }} className="next-art-sidebar-spacer" />
+
+              {/* Desktop sidebar — latest stories */}
+              <div className="next-art-sidebar" style={{ width: 280, flexShrink: 0, padding: '56px 0 0 40px', position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', overflowY: 'auto', alignSelf: 'flex-start' }}>
+                <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.24em', textTransform: 'uppercase', borderBottom: '1px solid #E2DED8', paddingBottom: 12, marginBottom: 20 }}>
+                  Latest stories
+                </p>
+                {sidebarArticles.length > 0 ? (
+                  sidebarArticles.map(a => <SidebarCard key={a.id} article={a} />)
+                ) : (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #F5F3F0', marginBottom: 16 }}>
+                      <div style={{ width: 72, height: 60, background: '#F0EDE8', flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ width: '60%', height: 8, background: '#F0EDE8', marginBottom: 6 }} />
+                        <div style={{ width: '90%', height: 8, background: '#F0EDE8', marginBottom: 4 }} />
+                        <div style={{ width: '70%', height: 8, background: '#F0EDE8' }} />
+                      </div>
+                    </div>
+                  ))
+                )}
+                <ArticleNewsletterForm variant="sidebar" />
+                <style>{`.next-art-sidebar::-webkit-scrollbar { width: 3px; } .next-art-sidebar::-webkit-scrollbar-thumb { background: #E2DED8; border-radius: 2px; }`}</style>
+              </div>
             </div>
           </div>
 
@@ -207,6 +321,36 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
             <div className="next-art-newsletter">
               <ArticleNewsletterForm variant="mobile" />
             </div>
+          )}
+
+          {/* Related articles strip */}
+          {article.category && (
+            <section style={{ background: '#F8F7F5', padding: '48px 56px' }} className="nxt-related-strip">
+              <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 28 }}>
+                  <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 24, color: '#111' }}>
+                    More from {article.category.french_name}
+                  </h2>
+                  <Link href={`/category/${article.category.slug}`} style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: '#888', borderBottom: '1px solid #ddd', textDecoration: 'none', paddingBottom: 2 }}>
+                    View all →
+                  </Link>
+                </div>
+                <div style={{ display: 'flex', gap: 24, overflowX: 'auto', scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingBottom: 8 } as React.CSSProperties} className="nxt-related-scroll">
+                  {relatedArticles.length > 0 ? (
+                    relatedArticles.map(a => <RelatedCard key={a.id} article={a} />)
+                  ) : (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} style={{ minWidth: 240, maxWidth: 240, flexShrink: 0 }} className="nxt-related-card-width">
+                        <div style={{ width: '100%', aspectRatio: '3/2', background: '#E8E5E0', marginBottom: 14 }} />
+                        <div style={{ width: '50%', height: 7, background: '#E8E5E0', marginBottom: 8 }} />
+                        <div style={{ width: '90%', height: 12, background: '#E8E5E0', marginBottom: 5 }} />
+                        <div style={{ width: '70%', height: 12, background: '#E8E5E0' }} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </section>
           )}
 
           {/* Recurse */}
@@ -228,12 +372,15 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
           .next-hero-text { padding: 0 20px 28px !important; }
           .next-art-wrap { flex-direction: column !important; }
           .next-art-body { padding: 28px 20px 0 !important; border-right: none !important; }
-          .next-art-sidebar-spacer { display: none !important; }
+          .next-art-sidebar { display: none !important; }
           .next-art-newsletter { display: block !important; }
+          .nxt-related-strip { padding: 40px 24px !important; }
+          .nxt-related-card-width { min-width: 70vw !important; max-width: 70vw !important; }
         }
         @media (min-width: 769px) {
           .next-art-newsletter { display: none !important; }
         }
+        .nxt-related-scroll::-webkit-scrollbar { display: none; }
         .art-inline-img img { object-fit: cover; }
         @media (max-width: 768px) {
           .art-inline-img { margin-left: -20px !important; margin-right: -20px !important; width: calc(100% + 40px) !important; }

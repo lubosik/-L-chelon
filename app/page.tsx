@@ -531,7 +531,7 @@ function ArticleCardHP({ article }: { article: Article | null }) {
     return (
       <div className="article-card-hp" style={{ background: '#fff', display: 'flex', flexDirection: 'column', cursor: 'default' }}>
         <div className="article-card-hp-img" style={{ width: '100%', aspectRatio: '16/10', background: '#E8E5E0', flexShrink: 0 }} />
-        <div className="article-card-hp-body" style={{ padding: '20px 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="article-card-hp-body" style={{ padding: '20px 16px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ width: 80, height: 8, background: '#E8E5E0' }} />
           <div style={{ width: '90%', height: 12, background: '#F0EDE8' }} />
           <div style={{ width: '70%', height: 12, background: '#F0EDE8' }} />
@@ -547,7 +547,7 @@ function ArticleCardHP({ article }: { article: Article | null }) {
       <div className="article-card-hp-img" style={{ position: 'relative', width: '100%', aspectRatio: '16/10', background: '#E8E5E0', overflow: 'hidden', flexShrink: 0 }}>
         <Image src={getCoverImage(article) ?? '/heroes/la-mode-grid.jpg'} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 33vw" />
       </div>
-      <div className="article-card-hp-body" style={{ padding: '20px 0 28px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+      <div className="article-card-hp-body" style={{ padding: '20px 16px 28px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
         <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', lineHeight: 1 }}>
           {article.category?.french_name ?? "L'Échelon"}
         </p>
