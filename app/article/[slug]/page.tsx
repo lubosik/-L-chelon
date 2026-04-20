@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { fetchArticleBySlug, fetchRelatedArticles, fetchRecentArticles } from '@/lib/strapi'
 import type { Article } from '@/lib/strapi'
+import { getCoverImage } from '@/lib/categoryImages'
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -47,7 +48,11 @@ interface RichBlock {
   children?: RichChild[]
 }
 
-const STRAPI_URL_FOR_BODY = process.env.NEXT_PUBLIC_STRAPI_URL || ''
+const STRAPI_URL_FOR_BODY = process.env.STRAPI_INTERNAL_URL || process.env.NEXT_PUBLIC_STRAPI_URL || ''
+
+function clean(s: string): string {
+  return s.replace(/\s*—\s*/g, ' ').replace(/\s+/g, ' ').trim()
+}
 
 function resolveUrl(url: string) {
   if (!url) return url
@@ -65,7 +70,7 @@ function renderInline(children: RichChild[]): React.ReactNode {
         </a>
       )
     }
-    let node: React.ReactNode = child.text ?? ''
+    let node: React.ReactNode = clean(child.text ?? '')
     if (child.bold) node = <strong key={`b${ci}`} style={{ fontWeight: 600 }}>{node}</strong>
     if (child.italic) node = <em key={`i${ci}`}>{node}</em>
     if (child.underline) node = <u key={`u${ci}`}>{node}</u>
@@ -221,12 +226,12 @@ export default async function ArticlePage({ params }: Props) {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 56px 48px', maxWidth: 860, zIndex: 10 }} className="art-hero-text">
           {article.category && (
             <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.50)', marginBottom: 12 }}>
-              {article.category.french_name}{article.category.english_sub ? ` — ${article.category.english_sub}` : ''}
+              {article.category.french_name}{article.category.english_sub ? ` · ${article.category.english_sub}` : ''}
             </p>
           )}
           <h1
             style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 'clamp(28px, 4vw, 60px)', color: '#fff', lineHeight: 0.95, marginBottom: 20, maxWidth: 720 }}
-            dangerouslySetInnerHTML={{ __html: article.title }}
+            dangerouslySetInnerHTML={{ __html: clean(article.title) }}
           />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em' }}>
@@ -288,7 +293,7 @@ export default async function ArticlePage({ params }: Props) {
                   {/* Show excerpt as teaser, then gate */}
                   {article.excerpt && (
                     <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 400, fontSize: 18, color: '#222', lineHeight: 1.80, marginBottom: 24 }}>
-                      {article.excerpt}
+                      {clean(article.excerpt)}
                     </p>
                   )}
                   {hasBody && (
@@ -367,6 +372,35 @@ export default async function ArticlePage({ params }: Props) {
         </div>
       )}
 
+      {/* BOTTOM RELATED GRID — desktop */}
+      {related.length > 0 && (
+        <section style={{ background: '#F8F7F5', padding: '64px 56px' }} className="bottom-related">
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.28em', textTransform: 'uppercase', marginBottom: 12 }}>
+              Continue reading
+            </p>
+            <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 36, color: '#111', marginBottom: 8 }}>
+              Related stories
+            </h2>
+            <div style={{ height: 1, background: '#E2DED8', marginBottom: 40 }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }} className="related-grid">
+              {related.map((a) => (
+                <BottomRelatedCard key={a.id} article={a} />
+              ))}
+            </div>
+            <div style={{ marginTop: 40, textAlign: 'center' }}>
+              <Link href="/articles" style={{
+                fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: '#555',
+                borderBottom: '1px solid #ccc', paddingBottom: 3, textDecoration: 'none',
+                display: 'inline-flex', alignItems: 'flex-end', minHeight: 44,
+              }}>
+                View all articles →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       <style>{`
         @media (max-width: 768px) {
           .art-hero { height: 50svh !important; min-height: 320px !important; }
@@ -379,9 +413,12 @@ export default async function ArticlePage({ params }: Props) {
           .art-sidebar { display: none !important; }
           .article-body p { font-size: 16px !important; }
           .mobile-related { display: block !important; }
+          .bottom-related { display: none !important; }
         }
         @media (min-width: 769px) {
           .mobile-related { display: none !important; }
+          .bottom-related { display: block !important; }
+          .related-grid { grid-template-columns: repeat(3,1fr) !important; }
         }
         .mobile-related::-webkit-scrollbar { display: none; }
       `}</style>
@@ -426,18 +463,19 @@ function SidebarCard({ article }: { article: Article }) {
   const date = article.published_at
     ? new Date(article.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : ''
+  const imgSrc = getCoverImage(article)
   return (
     <Link href={`/article/${article.slug}`} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid #F0EDE8', paddingBottom: 16, marginBottom: 16 }}>
-      {article.cover_image && (
+      {imgSrc && (
         <div style={{ position: 'relative', width: '100%', height: 140, background: '#E8E5E0', overflow: 'hidden', marginBottom: 8 }}>
-          <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="240px" />
+          <Image src={imgSrc} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="240px" />
         </div>
       )}
       <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#aaa', letterSpacing: '0.18em', textTransform: 'uppercase', margin: '8px 0 4px' }}>
         {article.category?.french_name}
       </p>
       <p className="sidebar-title" style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 15, color: '#333', lineHeight: 1.25, transition: 'color 0.2s' }}>
-        {article.title}
+        {clean(article.title)}
       </p>
       {date && <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#bbb', marginTop: 4 }}>{date}</p>}
       <style>{`.sidebar-title:hover { color: #111 !important; }`}</style>
@@ -465,22 +503,54 @@ function MobileRelatedCard({ article }: { article: Article }) {
   const date = article.published_at
     ? new Date(article.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : ''
+  const imgSrc = getCoverImage(article)
   return (
     <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', display: 'block', minWidth: '72vw', scrollSnapAlign: 'start', flexShrink: 0 }}>
       <div style={{ position: 'relative', width: '100%', height: '50vw', background: '#E8E5E0', overflow: 'hidden' }}>
-        {article.cover_image && (
-          <Image src={article.cover_image.url} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="72vw" />
-        )}
+        {imgSrc && <Image src={imgSrc} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="72vw" />}
       </div>
       <div style={{ paddingTop: 12 }}>
         <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>
           {article.category?.french_name}
         </p>
         <p style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 18, color: '#111', lineHeight: 1.15, marginBottom: 4 }}>
-          {article.title}
+          {clean(article.title)}
         </p>
         {date && <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#bbb' }}>{date}</p>}
       </div>
+    </Link>
+  )
+}
+
+function BottomRelatedCard({ article }: { article: Article }) {
+  const date = article.published_at
+    ? new Date(article.published_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : ''
+  const imgSrc = getCoverImage(article)
+  return (
+    <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
+      <div style={{ position: 'relative', width: '100%', height: 220, background: '#E8E5E0', overflow: 'hidden', marginBottom: 16 }}>
+        {imgSrc && <Image src={imgSrc} alt={article.title} fill style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }} sizes="(max-width:768px) 100vw, 33vw" className="related-card-img" />}
+      </div>
+      <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.20em', textTransform: 'uppercase', marginBottom: 8 }}>
+        {article.category?.french_name ?? "L'Échelon"}
+      </p>
+      <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 20, color: '#111', lineHeight: 1.15, marginBottom: 8, transition: 'color 0.2s' }} className="related-card-title">
+        {clean(article.title)}
+      </h3>
+      {article.excerpt && (
+        <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 12, color: '#888', lineHeight: 1.65, marginBottom: 8,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>
+          {clean(article.excerpt)}
+        </p>
+      )}
+      <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#bbb' }}>
+        {date}{article.read_time ? ` · ${article.read_time} min read` : ''}
+      </p>
+      <style>{`
+        .related-card-img:hover { transform: scale(1.03); }
+        .related-card-title:hover { color: #444 !important; }
+      `}</style>
     </Link>
   )
 }

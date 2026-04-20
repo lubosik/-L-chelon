@@ -37,7 +37,7 @@ const FALLBACK_CATEGORIES: Record<string, Category & { tagline: string; intro: s
 const CATEGORY_META: Record<string, { title: string; description: string }> = {
   'la-mode': { title: "La Mode: Luxury Fashion Editorial | L'Échelon", description: "Couture coverage, runway analysis, and fashion intelligence from Paris, Milan, and New York. L'Échelon's fashion editorial for the discerning reader." },
   'la-vitesse': { title: "La Vitesse: Formula One and Luxury Motorsport | L'Échelon", description: "Inside the paddock, inside the hospitality suites, inside the decisions that define Formula One's most exclusive season. Motorsport intelligence from L'Échelon." },
-  'lhorlogerie': { title: "L'Horlogerie: Luxury Watch News and Auction Intelligence | L'Échelon", description: "Watch auction results, manufacture visits, and haute horlogerie editorial. From Patek Philippe to independent watchmakers — the L'Échelon watch intelligence." },
+  'lhorlogerie': { title: "L'Horlogerie: Luxury Watch News and Auction Intelligence | L'Échelon", description: "Watch auction results, manufacture visits, and haute horlogerie editorial. From Patek Philippe to independent watchmakers, the L'Échelon watch intelligence." },
   'lequitation': { title: "L'Équitation: Polo and Equestrian Lifestyle | L'Échelon", description: "Royal Ascot, Royal Windsor Polo, and the world's most exclusive equestrian calendar. L'Échelon's equestrian intelligence for the serious polo and racing enthusiast." },
   'lart-de-vivre': { title: "L'Art de Vivre: Superyacht and Luxury Lifestyle | L'Échelon", description: "Superyacht charter intelligence, private aviation, and the art of living without compromise. L'Échelon's lifestyle editorial for the ultra-high-net-worth reader." },
 }
