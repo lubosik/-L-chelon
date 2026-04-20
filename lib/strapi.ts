@@ -198,11 +198,18 @@ export async function fetchArticleBySlug(slug: string): Promise<Article | null> 
   return list[0] ?? null
 }
 
-export async function fetchRelatedArticles(categorySlug: string, excludeSlug: string): Promise<Article[]> {
+export async function fetchRelatedArticles(categorySlug: string, excludeSlug: string, limit = 5): Promise<Article[]> {
   const data = await strapiGet(
-    `/articles?filters[category][slug][$eq]=${encodeURIComponent(categorySlug)}&filters[slug][$ne]=${encodeURIComponent(excludeSlug)}&populate=*&sort=publishedAt:desc&pagination[limit]=3`,
+    `/articles?filters[category][slug][$eq]=${encodeURIComponent(categorySlug)}&filters[slug][$ne]=${encodeURIComponent(excludeSlug)}&populate=*&sort=publishedAt:desc&pagination[limit]=${limit}`,
     300
   )
+  return flattenList<Article>(data)
+}
+
+export async function fetchLatestArticles(limit = 5, excludeSlug?: string): Promise<Article[]> {
+  let path = `/articles?populate=*&sort=publishedAt:desc&pagination[limit]=${limit}`
+  if (excludeSlug) path += `&filters[slug][$ne]=${encodeURIComponent(excludeSlug)}`
+  const data = await strapiGet(path, 120)
   return flattenList<Article>(data)
 }
 

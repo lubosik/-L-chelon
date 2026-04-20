@@ -234,7 +234,7 @@ export default function HomePage() {
             Latest from L&apos;Échelon
           </h2>
           <div style={{ height: 1, background: '#E2DED8', marginBottom: 40 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32 }} className="articles-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, alignItems: 'start' }} className="articles-grid">
             {(articles.length > 0 ? articles.slice(0, 6) : Array(3).fill(null)).map((article, i) => (
               <ArticleCardHP key={article?.id ?? i} article={article} />
             ))}
@@ -462,21 +462,18 @@ export default function HomePage() {
           .featured-img-wrap { height: 56vw !important; }
           .featured-body { padding-left: 0 !important; padding-top: 24px !important; }
 
-          /* Article grid: horizontal list cards */
+          /* Article grid: single column stacked cards */
           .articles-section { padding: 48px 24px !important; }
           .articles-grid { grid-template-columns: 1fr !important; gap: 0 !important; }
           .article-card-hp {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: 16px !important;
-            border-bottom: 1px solid #E8E5E0 !important;
-            padding: 16px 0 !important;
+            border-bottom: 1px solid #F0EDE8 !important;
+            padding-bottom: 24px !important;
+            margin-bottom: 24px !important;
             background: transparent !important;
           }
-          .article-card-hp-img { width: 120px !important; height: 90px !important; flex-shrink: 0 !important; }
-          .article-card-hp-body { flex: 1 !important; padding: 0 !important; }
-          .article-card-hp h3 { font-size: clamp(16px, 4vw, 22px) !important; margin-bottom: 8px !important; }
-          .article-card-hp p { font-size: 8px !important; }
+          .article-card-hp-img { width: 100% !important; aspect-ratio: 16/9 !important; height: unset !important; }
+          .article-card-hp-body { padding: 16px 0 0 !important; }
+          .article-card-hp h3 { font-size: clamp(17px, 4vw, 22px) !important; }
 
           /* Index: horizontal scroll */
           .index-section { padding: 48px 24px !important; }
@@ -532,47 +529,43 @@ export default function HomePage() {
 function ArticleCardHP({ article }: { article: Article | null }) {
   if (!article) {
     return (
-      <div className="article-card-hp" style={{ background: '#fff' }}>
-        <div className="article-card-hp-img" style={{ width: '100%', height: 220, background: '#E8E5E0', flexShrink: 0 }} />
-        <div className="article-card-hp-body" style={{ padding: '20px 0 0' }}>
-          <div style={{ width: 80, height: 8, background: '#E8E5E0', marginBottom: 10 }} />
-          <div style={{ width: '90%', height: 12, background: '#F0EDE8', marginBottom: 6 }} />
+      <div className="article-card-hp" style={{ background: '#fff', display: 'flex', flexDirection: 'column', cursor: 'default' }}>
+        <div className="article-card-hp-img" style={{ width: '100%', aspectRatio: '16/10', background: '#E8E5E0', flexShrink: 0 }} />
+        <div className="article-card-hp-body" style={{ padding: '20px 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ width: 80, height: 8, background: '#E8E5E0' }} />
+          <div style={{ width: '90%', height: 12, background: '#F0EDE8' }} />
           <div style={{ width: '70%', height: 12, background: '#F0EDE8' }} />
         </div>
       </div>
     )
   }
   return (
-    <div className="article-card-hp" style={{ background: '#fff' }}>
-      <Link href={`/article/${article.slug}`} style={{ display: 'contents', textDecoration: 'none' }}>
-        <div className="article-card-hp-img" style={{ position: 'relative', width: '100%', height: 220, background: '#E8E5E0', overflow: 'hidden', flexShrink: 0 }}>
-          <Image src={getCoverImage(article) ?? '/heroes/la-mode-grid.jpg'} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 120px, 33vw" />
+    <Link href={`/article/${article.slug}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', background: '#fff', cursor: 'pointer', transition: 'opacity 0.2s' }} className="article-card-hp"
+      onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+      onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+    >
+      <div className="article-card-hp-img" style={{ position: 'relative', width: '100%', aspectRatio: '16/10', background: '#E8E5E0', overflow: 'hidden', flexShrink: 0 }}>
+        <Image src={getCoverImage(article) ?? '/heroes/la-mode-grid.jpg'} alt={article.title} fill style={{ objectFit: 'cover' }} sizes="(max-width:768px) 100vw, 33vw" />
+      </div>
+      <div className="article-card-hp-body" style={{ padding: '20px 0 28px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+        <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', lineHeight: 1 }}>
+          {article.category?.french_name ?? "L'Échelon"}
+        </p>
+        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 20, color: '#111', lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: '0.01em' }}>
+          {article.title}
+        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', paddingTop: 8 }}>
+          <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 8.5, color: '#bbb', letterSpacing: '0.12em' }}>
+            By {article.author?.name ?? "L'Échelon"} · {article.read_time ?? 5} min
+          </span>
+          <span style={{
+            marginLeft: 'auto', fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '3px 8px',
+            ...(article.is_premium ? { background: '#111', color: '#fff' } : { border: '1px solid #ddd', color: '#aaa' }),
+          }}>
+            {article.is_premium ? 'Members' : 'Free'}
+          </span>
         </div>
-        <div className="article-card-hp-body" style={{ padding: '20px 0 0' }}>
-          <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
-            {article.category?.french_name ?? "L'Échelon"}
-          </p>
-          <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 20, color: '#111', lineHeight: 1.15, marginBottom: 12, transition: 'color 0.2s', cursor: 'pointer' }}
-            onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = '#333' }}
-            onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = '#111' }}
-          >
-            {article.title}
-          </h3>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#bbb', letterSpacing: '0.12em' }}>
-              By {article.author?.name ?? "L'Échelon"} · {article.read_time ?? 5} min
-            </span>
-            <span style={{
-              fontFamily: 'Lato, sans-serif', fontSize: 7,
-              ...(article.is_premium
-                ? { background: '#111', color: '#fff', padding: '2px 8px' }
-                : { border: '1px solid #ccc', color: '#aaa', padding: '2px 8px' }),
-            }}>
-              {article.is_premium ? 'Members' : 'Free'}
-            </span>
-          </div>
-        </div>
-      </Link>
-    </div>
+      </div>
+    </Link>
   )
 }
