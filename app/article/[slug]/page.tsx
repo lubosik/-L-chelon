@@ -289,13 +289,10 @@ export default async function ArticlePage({ params }: Props) {
               More from {article.category?.french_name ?? "L'Échelon"}
             </h2>
             {article.category && (
-              <Link href={`/category/${article.category.slug}`} style={{
+              <Link href={`/category/${article.category.slug}`} className="view-all-link" style={{
                 fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 14, color: '#888',
-                borderBottom: '1px solid #ddd', textDecoration: 'none', paddingBottom: 2, transition: 'color 0.2s, border-color 0.2s',
-              }}
-                onMouseOver={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#111'; el.style.borderBottomColor = '#111' }}
-                onMouseOut={(e) => { const el = e.currentTarget as HTMLElement; el.style.color = '#888'; el.style.borderBottomColor = '#ddd' }}
-              >
+                borderBottom: '1px solid #ddd', textDecoration: 'none', paddingBottom: 2,
+              }}>
                 View all →
               </Link>
             )}
@@ -340,6 +337,7 @@ export default async function ArticlePage({ params }: Props) {
       <style>{`
         /* Hero sizing */
         .art-hero { height: 65vh; min-height: 420px; }
+        .view-all-link:hover { color: #111 !important; border-bottom-color: #111 !important; }
         @media (max-width: 768px) {
           .art-hero { height: 55svh !important; min-height: 320px !important; }
           .art-breadcrumb { left: 20px !important; top: 16px !important; }
