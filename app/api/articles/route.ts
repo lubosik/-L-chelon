@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   try {
     const url = `${STRAPI_URL}/api/articles?${qs}`
     console.log('[api/articles] fetching:', url, 'has_token:', !!STRAPI_TOKEN)
-    const res = await fetch(url, { headers, next: { revalidate: 30 } })
+    const res = await fetch(url, { headers, cache: 'no-store' })
     if (!res.ok) {
       const body = await res.text()
       console.error('[api/articles] strapi error', res.status, body)
