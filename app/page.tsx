@@ -126,7 +126,7 @@ export default function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* SECTION 1: HERO */}
-      <Hero article={featuredArticle} />
+      <Hero article={null} />
 
       {/* SECTION 2: TICKER BAR */}
       <div style={{ background: '#111', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>

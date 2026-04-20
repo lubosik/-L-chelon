@@ -5,12 +5,15 @@ function authHeaders(): Record<string, string> {
   return STRAPI_TOKEN ? { Authorization: `Bearer ${STRAPI_TOKEN}` } : {}
 }
 
-async function strapiGet(path: string, revalidate = 60) {
+async function strapiGet(path: string, revalidate = 0) {
+  const url = `${STRAPI_URL}/api${path}`
   try {
-    const res = await fetch(`${STRAPI_URL}/api${path}`, {
-      headers: authHeaders(),
-      next: { revalidate },
-    })
+    const makeOpts = (h: Record<string, string>) =>
+      revalidate === 0
+        ? { headers: h, cache: 'no-store' as const }
+        : { headers: h, next: { revalidate } }
+    let res = await fetch(url, makeOpts(authHeaders()))
+    if (res.status === 401) res = await fetch(url, makeOpts({}))
     if (!res.ok) return null
     return res.json()
   } catch {
