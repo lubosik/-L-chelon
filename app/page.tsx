@@ -38,7 +38,7 @@ const faqSchema = {
   'mainEntity': [
     { '@type': 'Question', 'name': "What is L'Échelon?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon is a luxury editorial intelligence platform covering five pillars: haute couture fashion, Formula One motorsport, luxury watches, equestrian sports, and ultra-luxury lifestyle. Published twice monthly." } },
     { '@type': 'Question', 'name': "What does L'Échelon cover?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon covers five luxury verticals: La Mode (fashion and couture), La Vitesse (Formula One and motorsport), L'Horlogerie (luxury watches and haute horlogerie), L'Équitation (polo and equestrian), and L'Art de Vivre (superyacht lifestyle and ultra-luxury)." } },
-    { '@type': 'Question', 'name': "How do I subscribe to L'Échelon?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon offers a free tier with newsletter access and a members tier at $12/month or $99/year. Members receive full site access, the complete L'Échelon Index analytics, and all premium articles." } },
+    { '@type': 'Question', 'name': "How do I subscribe to L'Échelon?", 'acceptedAnswer': { '@type': 'Answer', 'text': "L'Échelon is free. Create a free account to read every story across all five pillars — no payment required." } },
     { '@type': 'Question', 'name': "What is the L'Échelon Index?", 'acceptedAnswer': { '@type': 'Answer', 'text': "The L'Échelon Index is a live intelligence dashboard tracking performance metrics across the five luxury pillars. Full access is available to members." } },
   ],
 }
@@ -204,7 +204,7 @@ export default function HomePage() {
                   </p>
                 )}
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 24 }}>
-                  By {featuredArticle.author?.name ?? "L'Échelon"} · {featuredArticle.read_time ?? 5} min read · {featuredArticle.is_premium ? 'Members' : 'Free'}
+                  By {featuredArticle.author?.name ?? "L'Échelon"} · {featuredArticle.read_time ?? 5} min read · Free
                 </p>
                 <Link href={`/article/${featuredArticle.slug}`} style={{
                   fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: '#111',
@@ -286,13 +286,13 @@ export default function HomePage() {
                   transformOrigin: 'bottom center',
                 }}
               >
-                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.30)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
+                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 10 }}>
                   {item.label}
                 </div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 36, color: item.is_premium ? 'rgba(255,255,255,0.20)' : '#ffffff', lineHeight: 1, marginBottom: 6 }}>
-                  {item.is_premium ? '· · ·' : item.value}
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 36, color: '#ffffff', lineHeight: 1, marginBottom: 6, filter: item.is_premium ? 'blur(6px)' : 'none', userSelect: item.is_premium ? 'none' as const : 'auto' as const }}>
+                  {item.value}
                 </div>
-                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.10em', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.10em', marginBottom: 6 }}>
                   {item.sub}
                 </div>
                 {item.change && (
@@ -310,7 +310,7 @@ export default function HomePage() {
           <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '40px 0 0' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 32, flexWrap: 'wrap', gap: 20 }} className="index-footer">
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(255,255,255,0.40)' }}>
-              Full intelligence access for members.
+              L&apos;Échelon Index — coming this season.
             </p>
             <Link href="/intelligence" style={{
               background: '#ffffff', color: '#111111',
@@ -321,7 +321,7 @@ export default function HomePage() {
               onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.background = '#E8E5E0' }}
               onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.background = '#ffffff' }}
             >
-              Unlock Intelligence
+              Join Waitlist →
             </Link>
           </div>
         </div>
@@ -369,7 +369,7 @@ export default function HomePage() {
           {[
             { q: "What is L'Échelon?", a: "L'Échelon is a luxury editorial intelligence platform covering five pillars: haute couture fashion, Formula One motorsport, luxury watches, equestrian sports, and ultra-luxury lifestyle. Published twice monthly." },
             { q: "What does L'Échelon cover?", a: "La Mode (fashion and couture), La Vitesse (Formula One and motorsport), L'Horlogerie (luxury watches), L'Équitation (polo and equestrian), and L'Art de Vivre (superyacht lifestyle and ultra-luxury)." },
-            { q: "How do I subscribe?", a: "L'Échelon offers a free tier with newsletter access and a members tier at $12/month or $99/year. Members receive full site access, the complete L'Échelon Index, and all premium articles." },
+            { q: "How do I subscribe?", a: "L'Échelon is entirely free. Create an account to read every story across all five pillars — no payment, no credit card required." },
             { q: "What is the L'Échelon Index?", a: "A live intelligence dashboard tracking performance metrics across the five luxury pillars: fashion social reach, watch auction results, F1 sponsor spend, and more. Full access for members." },
           ].map((item, i) => (
             <div key={i} style={{ borderBottom: '1px solid #E2DED8', padding: '24px 0' }}>
@@ -558,11 +558,8 @@ function ArticleCardHP({ article }: { article: Article | null }) {
           <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 8.5, color: '#bbb', letterSpacing: '0.12em' }}>
             By {article.author?.name ?? "L'Échelon"} · {article.read_time ?? 5} min
           </span>
-          <span style={{
-            marginLeft: 'auto', fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '3px 8px',
-            ...(article.is_premium ? { background: '#111', color: '#fff' } : { border: '1px solid #ddd', color: '#aaa' }),
-          }}>
-            {article.is_premium ? 'Members' : 'Free'}
+          <span style={{ marginLeft: 'auto', fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '3px 8px', border: '1px solid #ddd', color: '#aaa' }}>
+            Free
           </span>
         </div>
       </div>

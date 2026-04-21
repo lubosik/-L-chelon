@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { auth } from '@clerk/nextjs/server'
 import { fetchArticleBySlug, fetchRelatedArticles, fetchLatestArticles } from '@/lib/strapi'
 import type { Article } from '@/lib/strapi'
 import { getCoverImage } from '@/lib/categoryImages'
@@ -8,6 +9,7 @@ import { renderBody, clean } from '@/lib/richText'
 import ArticleProgressBar from '@/components/ArticleProgressBar'
 import ArticleNewsletterForm from '@/components/ArticleNewsletterForm'
 import ArticleNextLoader from '@/components/ArticleNextLoader'
+import AuthGate from '@/components/AuthGate'
 
 interface Props { params: Promise<{ slug: string }> }
 
@@ -36,6 +38,8 @@ const STRAPI_URL_FOR_BODY = process.env.STRAPI_INTERNAL_URL || process.env.NEXT_
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
+  const { userId } = await auth()
+  const isSignedIn = !!userId
   const article = await fetchArticleBySlug(slug)
 
   if (!article) {
@@ -64,7 +68,7 @@ export default async function ArticlePage({ params }: Props) {
     publisher: { '@type': 'NewsMediaOrganization', '@id': 'https://lechelon.com/#organization', name: "L'Échelon" },
     mainEntityOfPage: { '@type': 'WebPage', '@id': `https://lechelon.com/article/${slug}` },
     articleSection: article.category?.french_name,
-    isAccessibleForFree: !article.is_premium,
+    isAccessibleForFree: true,
   }
 
   const bodyBlocks = renderBody(article.body, STRAPI_URL_FOR_BODY)
@@ -132,13 +136,8 @@ export default async function ArticlePage({ params }: Props) {
             <span style={{ color: 'rgba(255,255,255,0.20)' }}>·</span>
             <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em' }}>{article.read_time ?? 5} min read</span>
             <span style={{ color: 'rgba(255,255,255,0.20)' }}>·</span>
-            <span style={{
-              fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase',
-              ...(article.is_premium
-                ? { background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.80)', padding: '3px 8px' }
-                : { color: 'rgba(255,255,255,0.45)' }),
-            }}>
-              {article.is_premium ? 'Members' : 'Free'}
+            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
+              Free
             </span>
           </div>
         </div>
@@ -170,7 +169,7 @@ export default async function ArticlePage({ params }: Props) {
 
             {/* Article body */}
             <div className="article-body">
-              {article.is_premium ? (
+              {!isSignedIn ? (
                 <>
                   {article.excerpt && (
                     <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 400, fontSize: 18, color: '#222', lineHeight: 1.80, marginBottom: 24 }}>
@@ -180,10 +179,10 @@ export default async function ArticlePage({ params }: Props) {
                   {hasBody && (
                     <div style={{ position: 'relative' }}>
                       <div style={{ maxHeight: 260, overflow: 'hidden' }}>{bodyBlocks.slice(0, 3)}</div>
-                      <div style={{ height: 200, marginTop: -200, position: 'relative', background: 'linear-gradient(to bottom, transparent 0%, #ffffff 80%)', zIndex: 1 }} />
+                      <div style={{ height: 180, marginTop: -180, position: 'relative', background: 'linear-gradient(to bottom, transparent 0%, #ffffff 70%)', zIndex: 1 }} />
                     </div>
                   )}
-                  <PaywallSection />
+                  <AuthGate />
                 </>
               ) : (
                 <>
@@ -202,7 +201,7 @@ export default async function ArticlePage({ params }: Props) {
             </div>
 
             {/* End divider + author credit */}
-            {!article.is_premium && (
+            {isSignedIn && (
               <div style={{ marginTop: 48 }}>
                 <div style={{ width: 40, height: 1, background: '#E2DED8', margin: '0 auto 32px' }} />
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>
@@ -387,34 +386,6 @@ export default async function ArticlePage({ params }: Props) {
   )
 }
 
-function PaywallSection() {
-  return (
-    <div style={{ paddingTop: 40, borderTop: '1px solid #E2DED8', textAlign: 'center' }}>
-      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: '50%', border: '1px solid #111', marginBottom: 20 }}>
-        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 18, color: '#111', lineHeight: 1 }}>L</span>
-      </div>
-      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 28, color: '#111', marginBottom: 16 }}>
-        Continue reading with L&apos;Échelon
-      </h2>
-      <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 13, color: '#666', lineHeight: 1.65, maxWidth: 360, margin: '0 auto 28px' }}>
-        This story is available to members. Join L&apos;Échelon for full access to all articles, the L&apos;Échelon Index, and intelligence across the five pillars of luxury.
-      </p>
-      <Link href="/subscribe" className="btn-primary paywall-btn" style={{ fontSize: 9, padding: '14px 32px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-        Become a member
-      </Link>
-      <div style={{ marginTop: 16 }}>
-        <Link href="/sign-in" style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: '#555', borderBottom: '1px solid #ccc', paddingBottom: 2, textDecoration: 'none' }}>
-          Sign in →
-        </Link>
-      </div>
-      <style>{`
-        @media (max-width: 768px) {
-          .paywall-btn { width: 100% !important; min-height: 52px !important; }
-        }
-      `}</style>
-    </div>
-  )
-}
 
 function SidebarLatestCard({ article }: { article: Article }) {
   const date = formatDate(article.published_at)
@@ -470,11 +441,8 @@ function RelatedCard({ article }: { article: Article }) {
           {[date, article.read_time ? `${article.read_time} min` : null].filter(Boolean).join(' · ')}
         </p>
       )}
-      <span style={{
-        display: 'inline-block', fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', padding: '3px 8px',
-        ...(article.is_premium ? { background: '#111', color: '#fff' } : { border: '1px solid #ddd', color: '#aaa' }),
-      }}>
-        {article.is_premium ? 'Members' : 'Free'}
+      <span style={{ display: 'inline-block', fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', border: '1px solid #ddd', color: '#aaa', padding: '3px 8px' }}>
+        Free
       </span>
       <style>{`.rc-title:hover { color: #555 !important; }`}</style>
     </Link>
@@ -506,11 +474,6 @@ function MobileMoreCard({ article }: { article: Article }) {
         {(date || article.read_time) && (
           <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 7.5, color: '#bbb', marginTop: 5 }}>
             {[date, article.read_time ? `${article.read_time} min` : null].filter(Boolean).join(' · ')}
-            {article.is_premium && (
-              <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 6.5, letterSpacing: '0.14em', textTransform: 'uppercase', background: '#111', color: '#fff', padding: '2px 6px', marginLeft: 6 }}>
-                Members
-              </span>
-            )}
           </p>
         )}
       </div>

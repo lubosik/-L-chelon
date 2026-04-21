@@ -105,14 +105,8 @@ function ArticleItem({ article, prefix }: { article: Article; prefix: string }) 
             <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mid)' }}>
               By {article.author?.name ?? 'L\'Échelon'} · {article.read_time ?? 5} min read
             </span>
-            <span style={{
-              fontFamily: 'Lato, sans-serif', fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase',
-              padding: '3px 10px',
-              border: article.is_premium ? '1px solid #111' : '1px solid #ccc',
-              color: article.is_premium ? '#111' : '#999',
-              borderRadius: article.is_premium ? 0 : 999,
-            }}>
-              {article.is_premium ? 'Members' : 'Free'}
+            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase', padding: '3px 10px', border: '1px solid #ccc', color: '#999', borderRadius: 999 }}>
+              Free
             </span>
           </div>
           <Link href={href} className="btn-pill" style={{ fontSize: 9, padding: '8px 18px' }}>

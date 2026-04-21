@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useAuth, useClerk } from '@clerk/nextjs'
 import type { Article } from '@/lib/strapi'
 import { getCoverImage } from '@/lib/categoryImages'
 import { renderBody, clean } from '@/lib/richText'
@@ -115,6 +116,9 @@ function RelatedCard({ article }: { article: Article }) {
 }
 
 export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryName, showNewsletter = true }: Props) {
+  const { userId } = useAuth()
+  const isSignedIn = !!userId
+  const { openSignUp, openSignIn } = useClerk()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(false)
   const [triggered, setTriggered] = useState(false)
@@ -244,20 +248,40 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
                 <hr style={{ border: 'none', borderTop: '1px solid #E2DED8', marginBottom: 40 }} />
 
                 <div className="article-body">
-                  {article.is_premium ? (
+                  {!isSignedIn ? (
                     <>
                       {article.excerpt && (
                         <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 400, fontSize: 18, color: '#222', lineHeight: 1.80, marginBottom: 24 }}>
                           {clean(article.excerpt)}
                         </p>
                       )}
-                      <div style={{ paddingTop: 32, borderTop: '1px solid #E2DED8', textAlign: 'center' }}>
-                        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 24, color: '#111', marginBottom: 12 }}>
-                          Continue reading with L&apos;Échelon
-                        </h3>
-                        <Link href={`/article/${article.slug}`} style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#fff', background: '#111', padding: '12px 28px', textDecoration: 'none', letterSpacing: '0.18em', textTransform: 'uppercase', display: 'inline-block' }}>
-                          Read full article
-                        </Link>
+                      {bodyBlocks.length > 0 && (
+                        <div style={{ position: 'relative' }}>
+                          <div style={{ maxHeight: 260, overflow: 'hidden' }}>{bodyBlocks.slice(0, 3)}</div>
+                          <div style={{ height: 180, marginTop: -180, position: 'relative', background: 'linear-gradient(to bottom, transparent 0%, #ffffff 70%)', zIndex: 1 }} />
+                        </div>
+                      )}
+                      <div style={{ borderTop: '1px solid #E2DED8', paddingTop: 48 }}>
+                        <div style={{ background: '#ffffff', padding: '48px 56px', textAlign: 'center', maxWidth: 520, margin: '0 auto' }} className="auth-gate-card">
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, borderRadius: '50%', border: '1px solid #111', margin: '0 auto 20px' }}>
+                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 600, fontSize: 16, color: '#111', lineHeight: 1 }}>É</span>
+                          </div>
+                          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 28, color: '#111', lineHeight: 1.1, marginBottom: 10 }}>
+                            Continue reading
+                          </h2>
+                          <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 300, fontSize: 13, color: '#666', lineHeight: 1.65, maxWidth: 360, margin: '10px auto 28px' }}>
+                            Create a free L&apos;Échelon account to read this story in full — and every story across our five pillars. No payment required.
+                          </p>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+                            <button onClick={() => openSignUp()} style={{ background: '#111', color: '#fff', fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '14px 32px', border: 'none', cursor: 'pointer', width: '100%', maxWidth: 280, minHeight: 44 }}>
+                              Create free account
+                            </button>
+                            <button onClick={() => openSignIn()} style={{ background: 'transparent', border: '1px solid #E2DED8', color: '#555', fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '13px 32px', cursor: 'pointer', width: '100%', maxWidth: 280, marginTop: 10, minHeight: 44 }}>
+                              Sign in
+                            </button>
+                          </div>
+                          <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#bbb', marginTop: 16 }}>Free forever. No credit card.</p>
+                        </div>
                       </div>
                     </>
                   ) : (
@@ -276,7 +300,7 @@ export default function ArticleNextLoader({ seenSlugs, categorySlug, categoryNam
                   )}
                 </div>
 
-                {!article.is_premium && (
+                {isSignedIn && (
                   <div style={{ marginTop: 48 }}>
                     <div style={{ width: 40, height: 1, background: '#E2DED8', margin: '0 auto 32px' }} />
                     <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 6 }}>

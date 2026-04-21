@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { SignInButton, SignUpButton, SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs'
 import { useHeroStore } from '@/lib/heroStore'
 
 const LEFT_CATS = [
@@ -50,6 +50,9 @@ const utilLink: React.CSSProperties = {
 export default function Nav() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const setHoverSlug = useHeroStore((s) => s.setHoverSlug)
+  const { user, isSignedIn } = useUser()
+  const { signOut } = useClerk()
+  const firstName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || ''
 
   function onCatEnter(e: React.MouseEvent, slug: string) {
     if (typeof window !== 'undefined' && window.innerWidth > 768) setHoverSlug(slug)
@@ -171,44 +174,51 @@ export default function Nav() {
               <button style={utilLink} onMouseOver={onUtilEnter} onMouseOut={onUtilLeave}>
                 <SignInButton mode="modal"><span>Sign In</span></SignInButton>
               </button>
-              <SignUpButton mode="modal">
-                <button style={{
-                  fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
-                  textTransform: 'uppercase', color: '#111', background: 'none',
-                  border: '1px solid #ccc', padding: '6px 14px', cursor: 'pointer',
-                  transition: 'border-color 0.2s', whiteSpace: 'nowrap',
-                }}
-                  onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#111' }}
-                  onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.borderColor = '#ccc' }}
-                >
-                  Sign Up
-                </button>
-              </SignUpButton>
+              <Link
+                href="/subscribe"
+                className="btn-primary"
+                style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0, letterSpacing: '0.16em', minHeight: 'unset', display: 'inline-block' }}
+              >
+                Subscribe
+              </Link>
             </SignedOut>
-            <SignedIn><UserButton /></SignedIn>
+            <SignedIn>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: '#555' }}>
+                  Hi {firstName}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  style={utilLink}
+                  onMouseOver={onUtilEnter}
+                  onMouseOut={onUtilLeave}
+                >
+                  Sign out
+                </button>
+              </div>
+            </SignedIn>
+          </div>
+
+          {/* Mobile: right side — subscribe or greeting */}
+          {isSignedIn ? (
+            <span className="nav-subscribe-mobile" style={{ display: 'none', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 14, color: '#555', alignItems: 'center' }}>
+              Hi {firstName}
+            </span>
+          ) : (
             <Link
+              className="nav-subscribe-mobile"
               href="/subscribe"
-              className="btn-primary"
-              style={{ fontSize: 9, padding: '8px 18px', flexShrink: 0, letterSpacing: '0.16em', minHeight: 'unset', display: 'inline-block' }}
+              style={{
+                display: 'none',
+                fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
+                textTransform: 'uppercase', color: '#fff', background: '#111',
+                padding: '8px 16px', textDecoration: 'none',
+                minHeight: 44, alignItems: 'center',
+              }}
             >
               Subscribe
             </Link>
-          </div>
-
-          {/* Mobile: subscribe button — right side */}
-          <Link
-            className="nav-subscribe-mobile"
-            href="/subscribe"
-            style={{
-              display: 'none',
-              fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em',
-              textTransform: 'uppercase', color: '#fff', background: '#111',
-              padding: '8px 16px', textDecoration: 'none',
-              minHeight: 44, alignItems: 'center',
-            }}
-          >
-            Subscribe
-          </Link>
+          )}
         </div>
       </nav>
 
@@ -258,12 +268,18 @@ export default function Nav() {
           }}>
             L&apos;Échelon
           </div>
-          <div style={{
-            fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa',
-            letterSpacing: '0.22em', textTransform: 'uppercase',
-          }}>
-            The Intelligence of Luxury
-          </div>
+          {isSignedIn ? (
+            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: '#777' }}>
+              Hi {firstName}
+            </div>
+          ) : (
+            <div style={{
+              fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa',
+              letterSpacing: '0.22em', textTransform: 'uppercase',
+            }}>
+              The Intelligence of Luxury
+            </div>
+          )}
           <div style={{ height: 1, background: '#E2DED8', margin: '20px 0' }} />
         </div>
 
@@ -351,13 +367,7 @@ export default function Nav() {
             }}
           >
             <span>Intelligence</span>
-            <span style={{
-              fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.12em',
-              textTransform: 'uppercase', color: '#fff', background: '#111',
-              padding: '3px 8px',
-            }}>
-              Members
-            </span>
+            <span style={{ color: '#bbb', fontFamily: 'sans-serif' }}>→</span>
           </Link>
 
           {/* Auth */}
@@ -378,11 +388,10 @@ export default function Nav() {
                   textTransform: 'uppercase', color: '#fff', background: '#111',
                   border: 'none', padding: '10px 0', cursor: 'pointer', minHeight: 44,
                 }}>
-                  Sign Up
+                  Create Account
                 </button>
               </SignUpButton>
             </SignedOut>
-            <SignedIn><UserButton /></SignedIn>
           </div>
         </div>
 
@@ -392,8 +401,19 @@ export default function Nav() {
           borderTop: '1px solid #F0EDE8',
           fontFamily: 'Lato, sans-serif', fontSize: 8,
           color: '#aaa', letterSpacing: '0.10em',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
-          © 2026 Rosen Relations
+          <span>© 2026 Rosen Relations</span>
+          {isSignedIn && (
+            <button
+              onClick={() => { signOut(); setDrawerOpen(false) }}
+              style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#aaa', letterSpacing: '0.14em', textTransform: 'uppercase', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              onMouseOver={(e) => { (e.currentTarget as HTMLElement).style.color = '#111' }}
+              onMouseOut={(e) => { (e.currentTarget as HTMLElement).style.color = '#aaa' }}
+            >
+              Sign out
+            </button>
+          )}
         </div>
       </div>
 

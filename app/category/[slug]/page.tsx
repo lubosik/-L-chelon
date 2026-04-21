@@ -143,7 +143,7 @@ export default async function CategoryPage({ params }: Props) {
                   </p>
                 )}
                 <p style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, color: '#aaa', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 24 }}>
-                  By {featuredArticle.author?.name ?? "L'Échelon"} · {featuredArticle.read_time ?? 5} min · {featuredArticle.is_premium ? 'Members' : 'Free'}
+                  By {featuredArticle.author?.name ?? "L'Échelon"} · {featuredArticle.read_time ?? 5} min · Free
                 </p>
                 <Link href={`/article/${featuredArticle.slug}`} style={{
                   fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: '#111',

@@ -193,13 +193,8 @@ export default function ArticlesPage() {
                       </span>
                     </div>
                     <div style={{ marginTop: 8 }}>
-                      <span style={{
-                        fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase',
-                        ...(featured.is_premium
-                          ? { background: '#111', color: '#fff', padding: '3px 9px', display: 'inline-block' }
-                          : { border: '1px solid #ccc', color: '#aaa', padding: '3px 9px', display: 'inline-block' }),
-                      }}>
-                        {featured.is_premium ? 'Members' : 'Free'}
+                      <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.16em', textTransform: 'uppercase', border: '1px solid #ccc', color: '#aaa', padding: '3px 9px', display: 'inline-block' }}>
+                        Free
                       </span>
                     </div>
                     {/* CTA */}
@@ -325,14 +320,6 @@ function ArticleListItem({ article }: { article: Article }) {
             <span className="art-list-author" style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#bbb' }}>By {article.author?.name ?? "L'Échelon"}</span>
             <span style={{ color: '#e0e0e0' }}>·</span>
             <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#bbb' }}>{article.read_time ?? 5} min</span>
-            {article.is_premium && (
-              <>
-                <span style={{ color: '#e0e0e0' }}>·</span>
-                <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.14em', textTransform: 'uppercase', background: '#111', color: '#fff', padding: '2px 8px' }}>
-                  Members
-                </span>
-              </>
-            )}
           </div>
         </div>
       </div>

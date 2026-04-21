@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 export async function POST(req: NextRequest) {
-  const { email } = await req.json().catch(() => ({}))
+  const body = await req.json().catch(() => ({}))
+  const { email, source } = body
+
   if (!email || typeof email !== 'string' || !email.includes('@')) {
     return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
   }
@@ -21,9 +23,12 @@ export async function POST(req: NextRequest) {
   })
 
   if (error) {
-    console.error('Resend error:', error)
-    return NextResponse.json({ error: 'Failed to subscribe' }, { status: 500 })
+    // Duplicate contact is not a fatal error
+    if ((error as { name?: string }).name !== 'validation_error') {
+      console.error('Resend error:', error)
+      return NextResponse.json({ error: 'Failed to subscribe' }, { status: 500 })
+    }
   }
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true, source: source || 'newsletter' })
 }

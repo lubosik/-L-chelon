@@ -164,15 +164,18 @@ nav, .ticker, .cat-grid-hp {
 /* ── CLERK OVERRIDES ── */
 .cl-card {
   border-radius: 0 !important;
-  font-family: 'Lato', sans-serif !important;
+  box-shadow: 0 4px 40px rgba(0,0,0,0.12) !important;
 }
 .cl-headerTitle {
   font-family: 'Cormorant Garamond', serif !important;
   font-weight: 300 !important;
   font-size: 28px !important;
+  color: #111 !important;
 }
-.cl-socialButtonsBlockButton {
-  border-radius: 0 !important;
+.cl-headerSubtitle {
+  font-family: 'Lato', sans-serif !important;
+  font-size: 12px !important;
+  color: #888 !important;
 }
 .cl-formButtonPrimary {
   background: #111111 !important;
@@ -181,13 +184,31 @@ nav, .ticker, .cat-grid-hp {
   font-size: 10px !important;
   letter-spacing: 0.18em !important;
   text-transform: uppercase !important;
+  height: 44px !important;
 }
-.cl-footerActionLink {
-  color: #111111 !important;
+.cl-formButtonPrimary:hover {
+  background: #333333 !important;
 }
 .cl-formFieldInput {
   border-radius: 0 !important;
   border: 1px solid #E2DED8 !important;
   font-family: 'Lato', sans-serif !important;
   font-size: 16px !important;
+  color: #333 !important;
 }
+.cl-formFieldInput:focus {
+  border-color: #111 !important;
+  box-shadow: none !important;
+}
+.cl-socialButtonsBlockButton {
+  border-radius: 0 !important;
+  border: 1px solid #E2DED8 !important;
+}
+.cl-footerActionLink {
+  color: #111111 !important;
+  font-family: 'Lato', sans-serif !important;
+}
+.cl-identityPreviewEditButton {
+  color: #111111 !important;
+}
+.cl-footer { display: none !important; }

@@ -190,8 +190,8 @@ export default function Hero({ article }: { article: Article | null }) {
                 {displayArticle.read_time} min read
               </span>
               <span style={{ color: 'rgba(255,255,255,0.40)' }}>·</span>
-              <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: displayArticle.is_premium ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.70)' }}>
-                {displayArticle.is_premium ? 'Members' : 'Free'}
+              <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.70)' }}>
+                Free
               </span>
             </div>
             <Link href={`/article/${displayArticle.slug}`} className="btn-hero hero-cta">

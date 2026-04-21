@@ -30,7 +30,7 @@ export default function ArticleCard({ article, locale = 'en' }: { article: Artic
             {article.title}
           </h3>
           <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 8, color: '#555', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-            {article.is_premium ? 'Members' : 'Free'} · {article.read_time ?? 5} min
+            Free · {article.read_time ?? 5} min
           </div>
         </div>
       </article>

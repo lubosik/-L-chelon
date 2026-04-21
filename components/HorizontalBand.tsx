@@ -29,15 +29,8 @@ export default function HorizontalBand({ articles, locale = 'en' }: { articles: 
                 {article.category.french_name}
               </span>
             )}
-            <span style={{
-              fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.12em', textTransform: 'uppercase',
-              padding: '2px 8px',
-              background: article.is_premium ? '#111' : 'transparent',
-              border: article.is_premium ? '1px solid #111' : '1px solid #ccc',
-              color: article.is_premium ? '#fff' : '#999',
-              borderRadius: article.is_premium ? 0 : 999,
-            }}>
-              {article.is_premium ? 'Members' : 'Free'}
+            <span style={{ fontFamily: 'Lato, sans-serif', fontSize: 7, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '2px 8px', background: 'transparent', border: '1px solid #ccc', color: '#999', borderRadius: 999 }}>
+              Free
             </span>
           </div>
           <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontWeight: 300, fontSize: 16, color: '#555', lineHeight: 1.3, transition: 'color 0.2s', marginBottom: 10 }} className="hb-title">
