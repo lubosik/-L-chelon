@@ -1,6 +1,11 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-export default clerkMiddleware()
+const isPublicApiRoute = createRouteMatcher(['/api/subscribe(.*)'])
+
+export default clerkMiddleware((auth, req) => {
+  if (isPublicApiRoute(req)) return NextResponse.next()
+})
 
 export const config = {
   matcher: [
